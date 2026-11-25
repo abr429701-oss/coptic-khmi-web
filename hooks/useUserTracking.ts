@@ -12,6 +12,7 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDoXHYpnsJMXg5O6XOo
 
 const STORAGE_KEYS = {
   DEVICE_ID: "@khmi/device_id",
+  HARDWARE_ID: "@khmi/hardware_id",
   SESSION_ID: "@khmi/session_id",
   USER_DATA: "@khmi/user_data",
   OFFLINE_QUEUE: "@khmi/offline_queue",
@@ -45,7 +46,27 @@ function postToSheet(body: object): Promise<any> {
 }
 
 
-export async function getHardwareDeviceId(): Promise<string> {
+// Session cache + single in-flight resolution so concurrent first calls can
+// never mint divergent IDs (previously web_${Date.now()} differed per call).
+let cachedHardwareId: string | null = null;
+let hardwareIdInFlight: Promise<string> | null = null;
+
+export function getHardwareDeviceId(): Promise<string> {
+  if (cachedHardwareId) return Promise.resolve(cachedHardwareId);
+  if (!hardwareIdInFlight) {
+    hardwareIdInFlight = resolveHardwareDeviceId()
+      .then((id) => {
+        cachedHardwareId = id; // stable for the whole session, fallback included
+        return id;
+      })
+      .finally(() => {
+        hardwareIdInFlight = null;
+      });
+  }
+  return hardwareIdInFlight;
+}
+
+async function resolveHardwareDeviceId(): Promise<string> {
   try {
     if (Platform.OS === "android") {
       const androidId = await Application.getAndroidId();
@@ -54,9 +75,18 @@ export async function getHardwareDeviceId(): Promise<string> {
       const iosId = await Application.getIosIdForVendorAsync();
       return `ios_${iosId}`;
     }
-    return `web_${Date.now()}`;
+    // Web/Electron/PWA: no hardware ID API exists. Persist one generated ID so
+    // sheet registration rows, token sync and restores stay stable per device.
+    const savedHardwareId = await AsyncStorage.getItem(STORAGE_KEYS.HARDWARE_ID);
+    if (savedHardwareId) return savedHardwareId;
+    const generatedHardwareId = `web_${generateUUID()}`;
+    await AsyncStorage.setItem(STORAGE_KEYS.HARDWARE_ID, generatedHardwareId);
+    return generatedHardwareId;
   } catch {
-    return `unknown_hw_${Date.now()}`;
+    // Failure-safe: a session-stable UUID (never a per-call timestamp). It is
+    // held in cachedHardwareId by the wrapper, so one session keeps one
+    // identity even if storage is unavailable; a restart retries persistence.
+    return `unknown_hw_${generateUUID()}`;
   }
 }
 
@@ -212,7 +242,18 @@ async function registerDevice(): Promise<boolean> {
   try {
     const deviceId = await getDeviceId();
     const hardwareId = await getHardwareDeviceId();
-    const deviceModel = `${Device.manufacturer || ""} ${Device.modelName || ""}`.trim() || "unknown";
+    // Web/Electron/PWA: manufacturer+modelName are undefined. Label with the
+    // actual OS and form factor so an iPhone PWA is not misread as a desktop.
+    let deviceModel = `${Device.manufacturer || ""} ${Device.modelName || ""}`.trim();
+    if (!deviceModel) {
+      const osName = Device.osName || "unknown";
+      const formFactor =
+        Device.deviceType === Device.DeviceType.PHONE ? "phone"
+        : Device.deviceType === Device.DeviceType.TABLET ? "tablet"
+        : Device.deviceType === Device.DeviceType.DESKTOP ? "desktop"
+        : "device";
+      deviceModel = `${osName} ${formFactor}`;
+    }
     const appVersion = Constants.expoConfig?.version || "1.0.0";
     const { ip, country } = await getLocation();
     const offlineSynced = await getIsSetupDone();

@@ -61,79 +61,33 @@ const SUB_SIZE = Math.min(Math.round(width * 0.03), 14);
 const ALPHA_SIZE = LOGO_SIZE;
 const WORD = ["Ⲭ", "ⲏ", "ⲙ", "ⲓ"];
 
-/* ─── صوت الويب — ناقوس كنسي احترافي ────────────────────── */
-// iOS Safari/Chrome-on-iOS start every AudioContext "suspended" until a user
-// gesture; scheduling oscillators on a suspended context plays nothing. We try
-// an immediate resume (works when the page already has interaction), and
-// otherwise defer the chime to the first tap/keypress. We never claim audible
-// playback without a gesture — the platform forbids it.
+/* ─── صوت الويب — نفس ناقوس أندرويد الأصلي startup_bell.wav ───────────── */
+// Browsers may block autoplay before a user gesture; we retry once on the
+// first tap/keypress and never claim audible playback without it.
+const STARTUP_BELL_URL = require("@/assets/sounds/startup_bell.wav");
 function playWebChime() {
-  try {
-    const AC = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AC) return;
-    const ctx: AudioContext = new AC();
-    const start = () => scheduleBells(ctx);
-    const tryStart = (): boolean => {
-      if (ctx.state !== "running") return false;
-      start();
-      return true;
-    };
-    if (tryStart()) return;
-    ctx.resume().then(() => tryStart()).catch(() => { });
-    if ((ctx.state as string) !== "running") {
-      const onGesture = () => {
-        try {
-          const fresh: AudioContext = new AC();
-          if (fresh.state === "running") {
-            scheduleBells(fresh);
-          } else {
-            fresh.resume().then(() => { if (fresh.state === "running") scheduleBells(fresh); }).catch(() => { });
-          }
-        } catch (_) { }
-      };
-      window.addEventListener("pointerdown", onGesture, { once: true });
-      window.addEventListener("touchstart", onGesture, { once: true });
-      window.addEventListener("keydown", onGesture, { once: true });
+  let played = false;
+  const doPlay = () => {
+    if (played) return;
+    try {
+      const a = new window.Audio(STARTUP_BELL_URL);
+      a.volume = 1.0;
+      played = true;
+      const p = a.play();
+      if (p && typeof (p as any).catch === "function") {
+        (p as Promise<void>).catch(() => { played = false; deferToGesture(); });
+      }
+    } catch (_) {
+      played = false;
     }
-  } catch (_) { }
-}
-
-function scheduleBells(ctx: AudioContext) {
-  try {
-
-    function bell(freq: number, gain: number, startTime: number, decay: number) {
-      const osc = ctx.createOscillator();
-      const osc2 = ctx.createOscillator();
-      const env = ctx.createGain();
-      const reverb = ctx.createGain();
-      osc.connect(env);
-      osc2.connect(env);
-      env.connect(reverb);
-      reverb.connect(ctx.destination);
-      osc.type = "sine";
-      osc2.type = "sine";
-      osc.frequency.value = freq;
-      osc2.frequency.value = freq * 2.756;
-      reverb.gain.value = 0.85;
-      env.gain.setValueAtTime(0, startTime);
-      env.gain.linearRampToValueAtTime(gain, startTime + 0.012);
-      env.gain.exponentialRampToValueAtTime(gain * 0.3, startTime + 0.3);
-      env.gain.exponentialRampToValueAtTime(0.0001, startTime + decay);
-      osc.start(startTime); osc.stop(startTime + decay);
-      osc2.start(startTime); osc2.stop(startTime + decay);
-    }
-
-    const t = ctx.currentTime;
-    bell(220.00, 0.35, t, 4.5);
-    bell(329.63, 0.22, t, 3.8);
-    bell(440.00, 0.16, t, 3.2);
-    bell(659.25, 0.09, t, 2.5);
-    bell(220.00, 0.18, t + 0.5, 3.5);
-    bell(329.63, 0.11, t + 0.5, 3.0);
-    bell(523.25, 0.14, t + 1.0, 3.0);
-    bell(659.25, 0.09, t + 1.2, 2.5);
-    bell(880.00, 0.06, t + 1.4, 2.0);
-  } catch (_) { }
+  };
+  const deferToGesture = () => {
+    const onGesture = () => doPlay();
+    window.addEventListener("pointerdown", onGesture, { once: true });
+    window.addEventListener("touchstart", onGesture, { once: true });
+    window.addEventListener("keydown", onGesture, { once: true });
+  };
+  doPlay();
 }
 
 interface Props { onFinish: () => void }

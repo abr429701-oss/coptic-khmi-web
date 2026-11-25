@@ -1,42 +1,6 @@
 // ⚠️ هذا السطر يجب أن يكون في أعلى الملف قبل أي شيء آخر
 // يسجّل مهام الخلفية مع TaskManager فور تحميل التطبيق
 import "@/hooks/backgroundTasks";
-import { I18nManager as DesktopI18n } from "react-native";
-// @ts-ignore
-import { LocaleProvider } from "react-native-web/dist/cjs/modules/useLocale";
-// @ts-ignore
-import { LocaleProvider as LocaleProviderEsm } from "react-native-web/dist/modules/useLocale";
-// Desktop: behave like the Arabic-language phone (RTL layout), which the mobile styles are written for.
-const DESKTOP_RTL_LAYOUT = true; // user confirmed: his phone uses the Arabic-OS RTL layout
-if (typeof document !== "undefined" && DESKTOP_RTL_LAYOUT) {
-  document.documentElement.setAttribute("dir", "rtl");
-  try { (DesktopI18n as any).isRTL = true; } catch {}
-  // React Native swaps textAlign left/right in RTL (left = start). react-native-web does not for these styles,
-  // so mirror that here: every text-align left/right rule (class or inline) is swapped.
-  const swapSheet = document.createElement("style");
-  swapSheet.setAttribute("data-rtl-swap", "1");
-  document.head.appendChild(swapSheet);
-  swapSheet.textContent =
-    '[style*="text-align: left"]{text-align:right !important}[style*="text-align: right"]{text-align:left !important}[dir="auto"]{unicode-bidi:plaintext !important}video{object-fit:contain !important;object-position:50% 50% !important;direction:ltr !important;margin-left:auto !important;margin-right:auto !important}';
-  const done = new Set<string>();
-  const scan = () => {
-    let css = "";
-    for (const sh of Array.from(document.styleSheets)) {
-      if ((sh.ownerNode as any)?.getAttribute?.("data-rtl-swap")) continue;
-      let rules: CSSRuleList;
-      try { rules = sh.cssRules; } catch { continue; }
-      for (const r of Array.from(rules)) {
-        const m = /^(\.[\w-]+)\s*\{[^}]*?text-align:\s*(left|right)/.exec(r.cssText);
-        if (m && !done.has(m[1])) {
-          done.add(m[1]);
-          css += `${m[1]}{text-align:${m[2] === "left" ? "right" : "left"} !important}`;
-        }
-      }
-    }
-    if (css) swapSheet.textContent += css;
-  };
-  setInterval(scan, 700);
-}
 if (typeof document !== "undefined") {
   const vs = document.createElement("style");
   vs.textContent = "*::-webkit-scrollbar{display:none !important;width:0 !important;height:0 !important}video{object-fit:contain !important;object-position:50% 50% !important;direction:ltr !important;margin-left:auto !important;margin-right:auto !important}[dir=\"auto\"]{unicode-bidi:plaintext !important}";
@@ -47,6 +11,10 @@ if (typeof document !== "undefined") {
   const fixInputs = () => {
     document.querySelectorAll("input,textarea").forEach((el: any) => {
       if (el.type && !["text", "search", ""].includes(el.type)) return;
+      if (el.dataset.khmiAlignSkip) return;
+      // Respect explicitly centered inputs (Android name screen centers its input);
+      // never override an input whose own style centers it.
+      if (getComputedStyle(el).textAlign === "center") { el.dataset.khmiAlignSkip = "1"; return; }
       const txt = (el.value || el.placeholder || "").replace(/[\u2066-\u2069]/g, "");
       const m = /[A-Za-z\u0590-\u08FF\uFB1D-\uFEFC\u2C80-\u2CFF\u0370-\u03FF]/.exec(txt);
       const rtl = m ? /[\u0590-\u08FF\uFB1D-\uFEFC]/.test(m[0]) : true;
@@ -411,7 +379,6 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <LocaleProvider direction="rtl"><LocaleProviderEsm direction="rtl">
       <SplashProvider>
         <LanguageProvider>
           <AdminProvider>
@@ -433,7 +400,6 @@ export default function RootLayout() {
           </AdminProvider>
         </LanguageProvider>
       </SplashProvider>
-      </LocaleProviderEsm></LocaleProvider>
     </SafeAreaProvider>
   );
 }
