@@ -1,7 +1,7 @@
 // Coptic Khmi web app service worker. App shell precached; Bible JSON and same-origin
 // GETs cached on demand. Cross-origin data (sheet sync, audio, videos) always goes to network.
-const VERSION = 'khmi-shell-v2';
-const RUNTIME = 'khmi-runtime-v2';
+const VERSION = 'khmi-shell-v3';
+const RUNTIME = 'khmi-runtime-v3';
 const PRECACHE = [
   "/coptic-khmi-web/",
   "/coptic-khmi-web/index.html",
