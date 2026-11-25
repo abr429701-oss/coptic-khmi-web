@@ -75,38 +75,38 @@ if MODE == "warmup":
         else: stop(f"warmup state {st}")
     stop("warmup never reached a clean page")
 if MODE == "install":
-    menu_attempts = 0
+    # every action once, then observe up to 60s for a state change; unchanged => stop with timeline
+    ACTIONS = {
+        "safari_page": lambda L: tap(378, 894, wait=0.5),
+        "app_page": lambda L: tap(378, 894, wait=0.5),
+        "menu_open": lambda L: tap(*find(L, r"(^|\s)Share$")[:2], wait=0.5),
+        "share_collapsed": lambda L: swipe_up(),
+        "share_expanded": lambda L: tap(*find(L, r"Add to Home Screen")[:2], wait=0.5),
+        "continue_modal": lambda L: tap(*find(L, r"Continue$")[:2], wait=0.5),
+        "coachmark": lambda L: tap(400, 707, wait=0.5),
+    }
+    last = None
     for i in range(30):
         st, lines, p = settle_state("inst")
-        if st in ("safari_page", "app_page"):
-            menu_attempts += 1
-            if menu_attempts > 1: stop("page menu not opened after ONE tap and 60s observation (see timeline stills)")
-            t0 = time.time()
-            tap(378, 894, wait=0.5)
-            seen = None
-            for k in range(16):                 # observe up to ~60s, NO second tap
-                p, ls2 = snap(f"menuobs{k:02d}"); s2 = classify(ls2)
-                log("menuobs", k, "t+%.1fs" % (time.time() - t0), s2)
-                if s2 not in ("safari_page", "app_page"): seen = s2; break
-                time.sleep(2.5)
-            if seen is None:
-                sh(f"idb ui describe-all --udid {UDID} > {CAP}/menuobs-ax.json 2>&1")
-                stop("page menu unchanged for 60s after one tap (input ignored or wrong target)")
-            continue
-        elif st == "tab_overview": stop("unexpected tab overview (no verified Done text; not recovering)")
-        elif st == "menu_open": tap(*find(lines, r"(^|\s)Share$")[:2], wait=4)
-        elif st == "share_collapsed": swipe_up()
-        elif st == "share_expanded": tap(*find(lines, r"Add to Home Screen")[:2], wait=7)
-        elif st == "continue_modal": tap(*find(lines, r"Continue$")[:2])
-        elif st == "coachmark": tap(400, 707)
-        elif st == "a2hs_confirm":
+        if st == last and st not in ("a2hs_confirm",): stop(f"state {st} unchanged after one action + 60s observation")
+        if st == "a2hs_confirm":
             a = find(lines, r"(^|\s)Add$")
-            if not a: time.sleep(3); continue    # still loading
-            time.sleep(3)
+            if not a or not has(lines, r"Open as Web App"):
+                time.sleep(5); last = None; continue          # still loading: observe, no tap
             tap(a[0], a[1], wait=6)
-            p, lines = snap("after-add"); st2 = classify(lines); log("after add", st2)
+            p, lines = snap("after-add"); log("after add", classify(lines))
             open(f"{CAP}/RESULT.txt", "a").write("ADD_TAPPED\n"); break
-        else: stop(f"install state {st}")
+        if st not in ACTIONS: stop(f"install state {st} (no action defined)")
+        t0 = time.time()
+        ACTIONS[st](lines)
+        last = st
+        for k in range(16):
+            p, ls2 = snap(f"obs{i:02d}-{k:02d}"); s2 = classify(ls2)
+            log("obs", i, k, "t+%.1fs" % (time.time() - t0), s2)
+            if s2 != st: last = None; break
+            time.sleep(2.5)
+        else:
+            stop(f"state {st} unchanged 60s after action (timeline stills obsNN)")
     else: stop("install loop exhausted")
 
 def go_home():
