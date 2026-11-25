@@ -24,10 +24,20 @@ REC=$!
 sleep 3
 python3 scripts/drive_a2hs.py "$UDID" install
 grep -q ADD_TAPPED capture/RESULT.txt || { echo "BLOCKED at install" | tee -a capture/RESULT.txt; finish; exit 0; }
+finish; REC=""
+cp capture/a2hs.mov capture/seg1-install.mov
+cp capture/RESULT.txt capture/RESULT-after-install.txt
+xcrun simctl io "$UDID" recordVideo --codec h264 capture/seg2-launch.mov &
+REC=$!
+sleep 3
 python3 scripts/drive_a2hs.py "$UDID" launch
 grep -q ICON_ON_HOME_SCREEN capture/RESULT.txt || { finish; exit 0; }
 sleep 60
+finish; REC=""
 sudo ifconfig en0 down || true
 sleep 4
+xcrun simctl io "$UDID" recordVideo --codec h264 capture/seg3-offline.mov &
+REC=$!
+sleep 3
 python3 scripts/drive_a2hs.py "$UDID" offline
 finish

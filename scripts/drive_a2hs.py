@@ -131,10 +131,40 @@ def launch_icon(tag, press_home=False):
     bar = has(lines, r"abr429701-oss\.github\.io")
     open(f"{CAP}/RESULT.txt", "a").write(("LAUNCHED_BUT_SAFARI_BAR_TEXT_PRESENT\n" if bar else "LAUNCHED_NO_SAFARI_ADDRESS_BAR_TEXT\n"))
     log("launched; classify", classify(lines), "bar_text", bar)
-if MODE == "launch": launch_icon("launch")  # starts from the SpringBoard page left after Add
+def interact(tag):
+    """OCR-gated: tap search field / Bible tab if their labels are visible; log every OCR line. No repeat taps."""
+    p, lines = snap(tag + "-home")
+    log("OCR", tag, [l[2] for l in lines][:60])
+    if len(lines) < 4: stop("app content not visible (too little text)")
+    sf = find(lines, r"بحث|search|ابحث")
+    if sf:
+        tap(sf[0], sf[1], wait=4)
+        sh("idb ui text 'a' --udid %s" % UDID); time.sleep(5)
+        p, l2 = snap(tag + "-search-typed")
+        log("OCR search", [l[2] for l in l2][:60])
+        open(f"{CAP}/RESULT.txt", "a").write(tag.upper() + "_SEARCH_TAPPED_AND_TYPED\n")
+        go_home_keep = False
+    else:
+        log("no search label found", tag)
+    p, l3 = snap(tag + "-end")
+    bible = find(l3, r"الكتاب|المقدس|bible")
+    if bible:
+        tap(bible[0], bible[1], wait=6)
+        p, l4 = snap(tag + "-bible")
+        log("OCR bible", [l[2] for l in l4][:60])
+        open(f"{CAP}/RESULT.txt", "a").write(tag.upper() + "_BIBLE_TAPPED\n")
+    else:
+        log("no bible label found", tag)
+if MODE == "launch":
+    launch_icon("launch")
+    r = open(f"{CAP}/RESULT.txt").read()
+    # true standalone check: content visible AND no Safari chrome words
+    p, lines = snap("launch-standalone")
+    chrome = has(lines, r"abr429701-oss|Safari|Reload|AA$")
+    open(f"{CAP}/RESULT.txt", "a").write("STANDALONE_CHROME_TEXT_PRESENT\n" if chrome else "STANDALONE_NO_CHROME_TEXT_CHECK_PIXELS\n")
+    interact("online")
 if MODE == "offline":
-    sh("xcrun simctl terminate %s com.apple.webapp" % UDID)
+    log("terminate", sh("xcrun simctl terminate %s com.apple.webapp 2>&1" % UDID))
     launch_icon("offline", press_home=True)
-    time.sleep(5)
-    snap("offline-ready")
-    tap(41, 105, wait=4); snap("offline-drawer")
+    time.sleep(8)
+    interact("offline")
