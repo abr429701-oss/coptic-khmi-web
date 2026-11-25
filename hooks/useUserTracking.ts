@@ -102,6 +102,21 @@ function generateUUID(): string {
   });
 }
 
+// Truthful platform label for generated IDs and model strings. expo-device has
+// no osName on web, so fall back to the browser-reported platform (NavigatorUAData
+// where available, then navigator.platform). Never resets a persisted ID: this is
+// only consulted when a NEW device_id/model string is generated.
+function getDevicePlatformLabel(): string {
+  if (Device.osName) return Device.osName.replace(/\s/g, "_");
+  if (Platform.OS === "web" && typeof navigator !== "undefined") {
+    const uaData = (navigator as any).userAgentData;
+    const reported = (uaData && uaData.platform) || navigator.platform || "";
+    if (reported) return reported.replace(/\s/g, "_");
+    return "web";
+  }
+  return "unknown";
+}
+
 export async function getDeviceId(): Promise<string> {
   try {
     const saved = await AsyncStorage.getItem(STORAGE_KEYS.DEVICE_ID);
@@ -114,7 +129,7 @@ export async function getDeviceId(): Promise<string> {
       console.log("✅ Device ID restored from sheet:", deviceId);
     } else {
       const randomPart = Math.random().toString(36).substring(2, 15);
-      const osPart = (Device.osName || "unknown").replace(/\s/g, "_");
+      const osPart = getDevicePlatformLabel();
       deviceId = `${osPart}_${randomPart}`;
       console.log("🆕 New device ID generated:", deviceId);
     }
@@ -246,7 +261,7 @@ async function registerDevice(): Promise<boolean> {
     // actual OS and form factor so an iPhone PWA is not misread as a desktop.
     let deviceModel = `${Device.manufacturer || ""} ${Device.modelName || ""}`.trim();
     if (!deviceModel) {
-      const osName = Device.osName || "unknown";
+      const osName = getDevicePlatformLabel();
       const formFactor =
         Device.deviceType === Device.DeviceType.PHONE ? "phone"
         : Device.deviceType === Device.DeviceType.TABLET ? "tablet"
