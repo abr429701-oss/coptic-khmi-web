@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, Linking, TextInput, Alert } from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, Linking, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { LinearGradient } from 'expo-linear-gradient';
