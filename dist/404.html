@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>coptic ⲭⲏⲙⲓ</title>
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  <link rel="icon" href="/coptic-khmi-web/favicon.ico" />
+  <script>window.__KHMI_BASE__ = '/coptic-khmi-web';</script>
+  <link rel="manifest" href="/coptic-khmi-web/manifest.json" />
+  <meta name="theme-color" content="#8B0000" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ⲭⲏⲙⲓ" />
+  <link rel="apple-touch-icon" href="/coptic-khmi-web/icons/apple-touch-icon.png" />
+</head>
+
+  <body>
+    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <!-- The root element for your Expo app. -->
+    <div id="root"></div>
+  <script src="/coptic-khmi-web/_expo/static/js/web/entry-77105821d91b3d9bb9874b6238d60852.js" defer></script>
+
+<script>
+  window.__KHMI_BUILD__ = '2026-11-25T04:14:43.015Z';
+  (function () {
+    if (!('serviceWorker' in navigator)) return;
+    var RELOAD_FLAG = 'khmi-sw-reload';
+    function showUpdateToast() {
+      if (sessionStorage.getItem(RELOAD_FLAG)) return; // loop guard: we just reloaded for this update
+      if (document.getElementById('khmi-update-toast')) return;
+      var t = document.createElement('div');
+      t.id = 'khmi-update-toast';
+      t.dir = 'rtl';
+      t.style.cssText = 'position:fixed;left:16px;right:16px;bottom:24px;z-index:99999;background:#2a2a2a;color:#fff;border:1px solid #8B0000;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 18px rgba(0,0,0,.5);font-family:inherit;';
+      var msg = document.createElement('div');
+      msg.style.cssText = 'flex:1;font-size:15px;line-height:1.5;';
+      msg.textContent = 'متوفر إصدار جديد من التطبيق';
+      var reopen = document.createElement('button');
+      reopen.textContent = 'إعادة الفتح';
+      reopen.style.cssText = 'background:#8B0000;color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:14px;cursor:pointer;';
+      reopen.onclick = function () {
+        try { sessionStorage.setItem(RELOAD_FLAG, '1'); } catch (e) {}
+        location.reload();
+      };
+      var later = document.createElement('button');
+      later.textContent = 'لاحقًا';
+      later.style.cssText = 'background:transparent;color:#ccc;border:1px solid #555;border-radius:10px;padding:9px 12px;font-size:14px;cursor:pointer;';
+      later.onclick = function () { t.remove(); };
+      t.appendChild(msg); t.appendChild(reopen); t.appendChild(later);
+      document.body.appendChild(t);
+    }
+    window.addEventListener('load', function () {
+      // Clear the loop guard AFTER the fresh page is up: if this load came from the user's
+      // tap, the new bundle is already running, so future real updates may prompt again.
+      try { sessionStorage.removeItem(RELOAD_FLAG); } catch (e) {}
+      // A page that is not yet controlled is on first install: its first controllerchange is
+      // the initial claim, not an update. Only prompt when the page was already controlled.
+      var wasControlled = !!navigator.serviceWorker.controller;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (!wasControlled) { wasControlled = true; return; }
+        showUpdateToast();
+      });
+      navigator.serviceWorker.register('/coptic-khmi-web/sw.js', { scope: '/coptic-khmi-web/' }).then(function (registration) {
+        var check = function () { registration.update().catch(function () {}); };
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+        setInterval(check, 5 * 60 * 1000);
+      }).catch(function () {});
+    });
+  })();
+</script>
+</body>
+</html>
