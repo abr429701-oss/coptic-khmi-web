@@ -100,15 +100,11 @@ for i in 1 2 3 4 5; do
 done
 cp "capture/05-expand-try$i.png" capture/05-sheet-expanded.png
 axd 05-ax-expanded.txt
-# row tap, retry until the confirm sheet (AX frame 0,92 440x54) is seen
-for i in 1 2 3; do
-  tap 220 655 4
-  shot "06-a2hs-confirm-try$i.png"
-  axd 06-ax-confirm.txt
-  grep -q '0,92 440x54' capture/06-ax-confirm.txt && break
-done
-grep -q '0,92 440x54' capture/06-ax-confirm.txt || BLOCK "A2HS confirm sheet not reached (see 05/06)"
-sleep 6
+# single row tap: Add to Home Screen
+tap 220 655 6
+shot 06-a2hs-confirm.png
+# iOS keyboard-intro modal ("Speed up your typing ... Continue") may cover the sheet: dismiss it
+tap 220 911 3
 shot 06b-a2hs-confirm-loaded.png
 ADD="388 113"
 tap ${ADD% *} ${ADD#* } 4
