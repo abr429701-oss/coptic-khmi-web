@@ -50,10 +50,12 @@ jobs:
       - name: Verify artifact allowlist (png only, app UI only)
         shell: pwsh
         run: |
-          $bad = Get-ChildItem shots -Recurse | Where-Object { $_.Extension -ne '.png' }
-          if ($bad) { echo "NON-PNG ARTIFACT FOUND"; exit 1 }
+          $bad = Get-ChildItem shots -Recurse -File | Where-Object { $_.Extension -ne '.png' -and $_.Extension -ne '.webm' }
+          if ($bad) { echo "DISALLOWED ARTIFACT TYPE FOUND"; $bad | ForEach-Object { echo $_.FullName }; exit 1 }
       - uses: actions/upload-artifact@v4
         with:
-          name: windows-packaged-ui-shots
-          path: shots/*.png
+          name: windows-packaged-ui-capture
+          path: |
+            shots/*.png
+            shots/video/*.webm
           retention-days: 1

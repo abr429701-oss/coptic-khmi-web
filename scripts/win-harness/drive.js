@@ -6,13 +6,27 @@ const mask = (s) => String(s).replace(/[A-Za-z]+_[a-z0-9]{10,}/g, '[device-id]')
 (async () => {
   const exePath = process.argv[2];
   const outDir = process.argv[3] || 'shots';
-  const app = await electron.launch({ executablePath: exePath, timeout: 90000 });
+  const app = await electron.launch({ executablePath: exePath, timeout: 90000, recordVideo: { dir: outDir + '/video', size: { width: 1280, height: 900 } } });
   const page = await app.firstWindow({ timeout: 90000 });
   page.on('console', (m) => { const t = mask(m.text()); if (/error|regist|update|إصدار/i.test(t)) console.log('CONSOLE:', t.slice(0, 160)); });
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.waitForTimeout(25000); // splash + boot + registration settle
   const shot = async (name) => page.screenshot({ path: `${outDir}/${name}.png` });
   await shot('01-home');
+  // Registration beat: ordinary launch already fired it; read persisted ids, print PREFIXES only.
+  const ids = await page.evaluate(() => {
+    const out = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (/device|hardware|tracking/i.test(k)) {
+        const v = String(localStorage.getItem(k) || '');
+        out[k] = v.length > 14 ? v.slice(0, 14) + '...' : v;
+      }
+    }
+    return out;
+  });
+  console.log('REG_ID_PREFIXES:', JSON.stringify(ids));
+
   // Real production chain, correct suppression: app 1.0.11 vs latest-windows.json 1.0.11
   const noticeShown = await page.evaluate(() => document.body.innerText.includes('متوفر إصدار جديد'));
   console.log('NOTICE_SHOWN(expect false):', noticeShown);
