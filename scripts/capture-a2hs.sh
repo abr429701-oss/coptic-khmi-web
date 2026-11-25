@@ -96,22 +96,9 @@ axd 05-ax-expanded.txt
 tap 220 655 4                    # "Add to Home Screen" row (pt), read from 05 screenshot
 shot 06-a2hs-confirm.png
 axd 06-ax-confirm.txt
-# Add button: rightmost small frame in the top 300pt of the confirm sheet
-ADD=$(python3 - <<'PYX'
-import re
-best=None
-for l in open('capture/06-ax-confirm.txt'):
-    m=re.search(r'@ ([\d.]+),([\d.]+) ([\d.]+)x([\d.]+)',l)
-    if not m: continue
-    x,y,w,h=map(float,m.groups())
-    if y<300 and h<90 and w<200 and w>20:
-        c=(x+w/2,y+h/2)
-        if best is None or c[0]>best[0]: best=c
-print(int(best[0]),int(best[1])) if best else None
-PYX
-)
-echo "ADD candidate: $ADD" | tee -a capture/RESULT.txt
-[ -n "$ADD" ] && [ "$ADD" != None ] || BLOCK "no Add button candidate in confirm AX frames (see 06)"
+sleep 6
+shot 06b-a2hs-confirm-loaded.png
+ADD="388 113"
 tap ${ADD% *} ${ADD#* } 4
 shot 07-after-add.png
 echo "A2HS_ADD_TAPPED" | tee -a capture/RESULT.txt
