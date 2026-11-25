@@ -49,6 +49,7 @@ def classify(lines):
     if has(lines, r"Quickly Access All Tabs|^Private$") and has(lines, r"Tab"): return "tab_overview"
     if has(lines, r"Search or enter website|qwertyuiop") : return "keyboard_url"
     if has(lines, r"Photos") and has(lines, r"Settings"): return "springboard"
+    if has(lines, r"Search$") and sum(has(lines, p) for p in (r"Files", r"Utilities", r"Preview", r"Fitness", r"Contacts", r"Watch", r"Calendar", r"Reminders")) >= 3: return "springboard"
     if has(lines, r"abr429701-oss\.github\.io"): return "safari_page"
     if has(lines, r"Coptic Dictionary|القاموس|جاهزة|خمي|ⲭⲏⲙⲓ"): return "app_page"
     return "unknown"
@@ -111,22 +112,29 @@ if MODE == "install":
 
 def go_home():
     subprocess.run(["idb", "ui", "button", "HOME", "--udid", UDID], capture_output=True); time.sleep(4)
-def launch_icon(tag):
-    go_home()
-    st, lines, p = settle_state(tag + "-home")
-    if st != "springboard": stop(f"expected springboard, got {st}")
-    ic = find(lines, r"coptic")
-    if not ic: stop("web clip label 'coptic' not on Home Screen (see pixels)")
+LABEL = r"XHM|XHU|xhui|ⲭⲏⲙⲓ|coptic"
+def launch_icon(tag, press_home=False):
+    if press_home: go_home()
+    ic = None
+    for attempt in range(4):
+        st, lines, p = settle_state(f"{tag}-sb{attempt}")
+        if st != "springboard": stop(f"expected springboard, got {st}")
+        ic = find(lines, LABEL)
+        if ic: break
+        log("icon label not on this SpringBoard page; swiping to next page")
+        subprocess.run(["idb", "ui", "swipe", "380", "500", "60", "500", "--duration", "0.3", "--udid", UDID], capture_output=True)
+        time.sleep(4)
+    if not ic: stop("web clip label (XHMI) not found on any SpringBoard page (see pixels)")
     open(f"{CAP}/RESULT.txt", "a").write("ICON_ON_HOME_SCREEN\n")
     tap(ic[0], ic[1] - 45, wait=15)
     p, lines = snap(tag + "-launched")
     bar = has(lines, r"abr429701-oss\.github\.io")
     open(f"{CAP}/RESULT.txt", "a").write(("LAUNCHED_BUT_SAFARI_BAR_TEXT_PRESENT\n" if bar else "LAUNCHED_NO_SAFARI_ADDRESS_BAR_TEXT\n"))
     log("launched; classify", classify(lines), "bar_text", bar)
-if MODE == "launch": launch_icon("launch")
+if MODE == "launch": launch_icon("launch")  # starts from the SpringBoard page left after Add
 if MODE == "offline":
     sh("xcrun simctl terminate %s com.apple.webapp" % UDID)
-    launch_icon("offline")
+    launch_icon("offline", press_home=True)
     time.sleep(5)
     snap("offline-ready")
     tap(41, 105, wait=4); snap("offline-drawer")
