@@ -22,7 +22,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useLang } from "@/contexts/LanguageContext";
-import Constants from "expo-constants";
+import { APP_VERSION } from "@/lib/appVersion";
 import { getDeviceId, getHardwareDeviceId, logActivity, backupUserData } from "@/hooks/useUserTracking";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -190,7 +190,7 @@ export default function AboutScreen({ compactHeader = false }: { compactHeader?:
 
 
   // Use version from app.json/Constants
-  const version = Constants.expoConfig?.version || "1.0.4";
+  const version = APP_VERSION;
 
   // Dynamic Search Description
   const searchLangs = [`${t.langPrefix}${t.langNames.coptic}`];
