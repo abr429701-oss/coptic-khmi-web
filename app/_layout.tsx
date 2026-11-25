@@ -265,8 +265,13 @@ function RootLayoutNav() {
   );
 }
 
-function AppContent() {
+// Runs hooks that need the query client, inside QueryClientProvider.
+function PostLoadEffects() {
   useSavedRecordReconcile();
+  return null;
+}
+
+function AppContent() {
   const { isAdminMode, isLoaded: isAdminLoaded } = useAdmin();
   const { config, remoteSettings } = useAppConfig();
   const updateAdminOnly = remoteSettings.content.appUpdateAdminOnly === "true";
@@ -307,6 +312,7 @@ function AppContent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <PostLoadEffects />
       <View
         style={{ flex: 1, opacity: splashDone ? 1 : 0 }}
         pointerEvents={splashDone ? "auto" : "none"}

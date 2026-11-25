@@ -4,7 +4,7 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
-    "build:web": "expo export -p web",
+    "build:web": "EXPO_PUBLIC_APP_VERSION=$(node -p \"require('./package.json').version\") expo export -p web",
     "start": "expo start --web"
   },
   "devDependencies": {
