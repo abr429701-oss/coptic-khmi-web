@@ -1,0 +1,59 @@
+name: windows-packaged-test-harness
+# Manually dispatched. Downloads the PRIVATE v1.0.11 Windows asset at runtime with a
+# least-privilege PAT (secret KHMI_DESK_PAT: fine-grained, coptic-dictionary-desktop only,
+# Contents: read-only) and drives the packaged Electron app on a real windows-latest
+# desktop. Publishes NO app source and NO binary: artifacts are UI screenshots only.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download private release asset (runtime only)
+        shell: pwsh
+        env:
+          GH_PAT: ${{ secrets.KHMI_DESK_PAT }}
+        run: |
+          $headers = @{ Authorization = "Bearer $env:GH_PAT"; Accept = "application/octet-stream" }
+          $asset = Invoke-RestMethod -Headers @{ Authorization = "Bearer $env:GH_PAT" } "https://api.github.com/repos/abr429701-oss/coptic-dictionary-desktop/releases/457636673/assets" | Where-Object { $_.name -eq "Coptic-Khmi-1.0.11-win-x64.zip" }
+          Invoke-WebRequest -Headers $headers -Uri "https://api.github.com/repos/abr429701-oss/coptic-dictionary-desktop/releases/assets/$($asset.id)" -OutFile "$env:RUNNER_TEMP\app.zip"
+          Expand-Archive "$env:RUNNER_TEMP\app.zip" -DestinationPath "$env:RUNNER_TEMP\app"
+          Remove-Item "$env:RUNNER_TEMP\app.zip" -Force
+          echo "expected_sha256=e326f2733ab11efbde25ae6255cb5582eb5287957a0d555b907a0461216a93bb"
+      - name: Static asar checks (fonts, startup bell, embedded version)
+        shell: pwsh
+        run: |
+          $asar = "$env:RUNNER_TEMP\app\Coptic Khmi-win32-x64\resources\app.asar"
+          npm --no-fund --no-audit exec --yes @electron/asar -- list "$asar" > "$env:RUNNER_TEMP\asarlist.txt"
+          $fonts = (Select-String -Path "$env:RUNNER_TEMP\asarlist.txt" -Pattern '\.ttf$').Count
+          $bell = (Select-String -Path "$env:RUNNER_TEMP\asarlist.txt" -Pattern 'startup_bell\.wav').Count
+          echo "fonts_ttf=$fonts bell=$bell"
+      - name: Install driver deps
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\harness" | Out-Null
+          Copy-Item "scripts/win-harness/drive.js" "$env:RUNNER_TEMP\harness\drive.js"
+          Set-Location "$env:RUNNER_TEMP\harness"
+          npm init -y | Out-Null
+          npm --no-fund --no-audit install playwright-core@1.49.1 | Out-Null
+      - name: Drive packaged app (UI beats + screenshots)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force shots | Out-Null
+          node "$env:RUNNER_TEMP\harness\drive.js" "$env:RUNNER_TEMP\app\Coptic Khmi-win32-x64\Coptic Khmi.exe" "shots"
+      - name: Delete binary before any upload
+        shell: pwsh
+        run: Remove-Item -Recurse -Force "$env:RUNNER_TEMP\app" -ErrorAction SilentlyContinue
+      - name: Verify artifact allowlist (png only, app UI only)
+        shell: pwsh
+        run: |
+          $bad = Get-ChildItem shots -Recurse | Where-Object { $_.Extension -ne '.png' }
+          if ($bad) { echo "NON-PNG ARTIFACT FOUND"; exit 1 }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-packaged-ui-shots
+          path: shots/*.png
+          retention-days: 1
