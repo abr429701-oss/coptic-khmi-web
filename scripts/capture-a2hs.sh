@@ -80,12 +80,29 @@ tap 400 707 2
 shot 02-coachmark-dismissed.png
 sleep 2
 # ---- Gate 2: "..." page menu, ONE duration tap; AX labels are None, so verify by frames/OCR ----
-idb ui tap 378 894 --duration 0.15 --udid "$UDID"
-sleep 3
-shot 03-menu.png
-axd 03-ax-menu.txt
-grep -q ',593 .*x956' capture/03-ax-menu.txt || BLOCK "Safari page menu not detected by AX frames (see 03-menu.png)"
-echo "menu detected" | tee -a capture/RESULT.txt
+cat > /tmp/diff.py <<'PYD'
+import sys
+from PIL import Image, ImageChops
+a=Image.open(sys.argv[1]).convert('L'); b=Image.open(sys.argv[2]).convert('L')
+box=(300,1700,1320,2600)  # lower-right popup area (px)
+d=ImageChops.difference(a.crop(box),b.crop(box))
+m=sum(d.getdata())/(d.size[0]*d.size[1])
+print(round(m,2)); sys.exit(0 if m>6 else 1)
+PYD
+xcrun simctl io "$UDID" screenshot /tmp/pre-menu.png
+cp /tmp/pre-menu.png capture/02b-pre-menu.png
+OPENED=0
+for i in 1 2 3 4; do
+  idb ui tap 378 894 --duration 0.15 --udid "$UDID"
+  sleep 3
+  shot "03-menu-try$i.png"
+  if /tmp/idbenv/bin/python /tmp/diff.py /tmp/pre-menu.png "capture/03-menu-try$i.png" | tee -a capture/RESULT.txt | grep -q .; then
+    /tmp/idbenv/bin/python /tmp/diff.py /tmp/pre-menu.png "capture/03-menu-try$i.png" >/dev/null && { OPENED=1; break; }
+  fi
+done
+[ $OPENED = 1 ] || BLOCK "Safari page menu never opened after 4 pixel-verified taps (see 03-menu-try*)"
+cp "capture/03-menu-try$i.png" capture/03-menu.png
+echo "menu detected (pixel diff)" | tee -a capture/RESULT.txt
 # ---- Gate 3: Share -> expand -> Add to Home Screen -> Add (coordinates read from run-4 screenshots; OCR dropped) ----
 tap 289 624 3
 shot 04-sharesheet.png
