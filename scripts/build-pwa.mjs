@@ -105,4 +105,5 @@ const reg = `
 html = html.replace('</body>', reg);
 fs.writeFileSync(path.join(DIST, 'index.html'), html);
 fs.writeFileSync(path.join(DIST, '404.html'), html); // Pages SPA fallback
+fs.writeFileSync(path.join(DIST, '.nojekyll'), ''); // Pages must serve _expo/* as-is
 console.log('PWA files written. Precache entries:', precache.length);
