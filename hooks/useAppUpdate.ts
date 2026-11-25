@@ -136,6 +136,19 @@ export function useAppUpdate() {
         return;
       }
 
+      // Desktop (web/Electron) update prompts are owned by DesktopUpdateNotice, which
+      // reads the desktop updates-repo metadata (latest-windows/linux.json). The shared
+      // config sheet row tracks the MOBILE marketing version (e.g. 1.3.1); comparing a
+      // desktop build (1.0.x) against it raises a false mandatory-update wall pointing at
+      // a mobile release. On web, resolve the share link only and never raise updateInfo.
+      if (Platform.OS === 'web') {
+        const desktopLink = sheetUpdateUrl || DEFAULT_APP_LINK;
+        setCurrentAppLink(desktopLink);
+        await AsyncStorage.setItem('@khmi/app_link', desktopLink);
+        setUpdateInfo(null);
+        return;
+      }
+
       const latestVersion = release.version;
       const releaseUrl = release.url;
       const releaseIsCloudflare = release.source === 'cloudflare';

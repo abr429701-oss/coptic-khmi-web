@@ -117,7 +117,20 @@ function getDevicePlatformLabel(): string {
   return "unknown";
 }
 
+// In-flight dedup: concurrent first-launch callers must share ONE generation,
+// otherwise a fresh device registers multiple device_ids (duplicate sheet rows).
+let deviceIdInflight: Promise<string> | null = null;
+
 export async function getDeviceId(): Promise<string> {
+  if (!deviceIdInflight) {
+    deviceIdInflight = resolveDeviceId().finally(() => {
+      deviceIdInflight = null;
+    });
+  }
+  return deviceIdInflight;
+}
+
+async function resolveDeviceId(): Promise<string> {
   try {
     const saved = await AsyncStorage.getItem(STORAGE_KEYS.DEVICE_ID);
     if (saved) return saved;
