@@ -142,7 +142,14 @@ export async function syncDeviceTokenWithSheet(forceResync: boolean = false) {
     const lang = (await AsyncStorage.getItem('coptic_dictionary_language')) || 'ar';
     const currentToken = token || 'no_token';
 
-    if (currentToken === 'no_token') {
+    // Desktop/web can never hold an Expo push token (expo-notifications remote push is
+    // Android/iOS-only and no web VAPID config exists), but the device must still be
+    // collected so it is listed in KHMI_NOFICATION and can receive admin sheet-messages
+    // by hardware_id. The backend already stores expoToken || 'no_token' and its sender
+    // only targets ExponentPushToken rows, so a token-less row is a supported state and
+    // push targeting is unaffected. On Android/iOS a missing token is transient, so the
+    // early return below is kept to avoid overwriting a real token in the sheet.
+    if (currentToken === 'no_token' && Platform.OS !== 'web') {
       await AsyncStorage.setItem(SYNC_SUCCESS_FLAG, 'false');
       console.warn('⚠️ No Expo push token available; skipping Sheet registration.');
       return false;
@@ -163,7 +170,7 @@ export async function syncDeviceTokenWithSheet(forceResync: boolean = false) {
     // المزامنة الإجبارية إذا مر وقت طويل (ساعتان بدلاً من 12 ساعة لزيادة الضمان)
     const timeToResync = !lastSentData || (now - (lastSentData.timestamp || 0)) > (2 * 60 * 60 * 1000);
 
-    if (!forceResync && isDataSame && !timeToResync && currentToken !== 'no_token') {
+    if (!forceResync && isDataSame && !timeToResync) {
       console.log('ℹ️ Token likely up to date, skipping sync.');
       return true;
     }
@@ -299,20 +306,26 @@ export function useExpoPushNotifications(splashDone: boolean = true) {
         });
       }
 
-      if (!Device.isDevice) {
+      // expo-device isDevice is unreliable on web/Electron; device collection does
+      // not depend on push capability, so only gate native platforms.
+      if (Platform.OS !== 'web' && !Device.isDevice) {
         isRegistering.current = false;
         return false;
       }
 
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-      if (finalStatus !== 'granted') {
-        isRegistering.current = false;
-        return false;
+      // Push permission is only required for actual push delivery (native). On
+      // web/Electron, device collection must not depend on it.
+      if (Platform.OS !== 'web') {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus !== 'granted') {
+          isRegistering.current = false;
+          return false;
+        }
       }
 
       // التحقق من الاتصال بالإنترنت أولاً
