@@ -46,7 +46,8 @@ cat > /tmp/ocr.py <<'PYEOF'
 # prints "x y" (points) of the first line whose text matches regex; exit 1 if none
 import subprocess, sys, re, csv, io
 png, ptw, pat = sys.argv[1], float(sys.argv[2]), sys.argv[3]
-subprocess.run(["tesseract", png, "/tmp/ocr-out", "--psm", "11", "tsv"], capture_output=True)
+p=subprocess.run(["tesseract", png, "/tmp/ocr-out", "--psm", "11", "tsv"], capture_output=True)
+open("/tmp/ocr-err.txt","ab").write(p.stderr+("rc=%s\n"%p.returncode).encode())
 out = open("/tmp/ocr-out.tsv", encoding="utf-8", errors="replace").read()
 rows = list(csv.DictReader(io.StringIO(out), delimiter="\t", quoting=csv.QUOTE_NONE))
 from PIL import Image
@@ -70,6 +71,7 @@ PYEOF
 PTW=440
 ocr() { # name regex -> echo "x y" or return 1
   xcrun simctl io "$UDID" screenshot /tmp/ocr-cur.png
+  cp /tmp/ocr-err.txt capture/ocr-err.txt 2>/dev/null; cp /tmp/ocr-out.tsv capture/ocr-last.tsv 2>/dev/null
   /tmp/idbenv/bin/python /tmp/ocr.py /tmp/ocr-cur.png $PTW "$1"
 }
 
@@ -82,7 +84,7 @@ idb ui tap 378 894 --duration 0.15 --udid "$UDID"
 sleep 3
 shot 03-menu.png
 axd 03-ax-menu.txt
-ocr '^Share$|Add to Bookmarks' >/dev/null || grep -q '@ 164.6.*250' capture/03-ax-menu.txt || BLOCK "Safari page menu not detected (OCR+AX) (see 03-menu.png)"
+ocr '^Share$|Add to Bookmarks' >/dev/null || grep -q '@ 164\.' capture/03-ax-menu.txt || BLOCK "Safari page menu not detected (OCR+AX) (see 03-menu.png)"
 echo "menu detected" | tee -a capture/RESULT.txt
 # ---- Gate 3: Share -> Add to Home Screen -> Add ----
 SX=$(ocr '^Share$') && tap ${SX% *} ${SX#* } 3 || tap 289 624 3
