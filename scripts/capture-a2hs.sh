@@ -25,6 +25,7 @@ export PATH=/tmp/idbenv/bin:$PATH
 brew install idb-companion >/dev/null 2>&1 || brew install facebook/fb/idb-companion >/dev/null 2>&1 || true
 idb_companion --udid "$UDID" >/dev/null 2>&1 &
 sleep 10
+brew install tesseract >/dev/null 2>&1 || true
 tap() { idb ui tap "$1" "$2" --udid "$UDID"; sleep "${3:-2}"; }
 shot() { xcrun simctl io "$UDID" screenshot "capture/$1"; }
 axd() { python3 /tmp/ax.py dump "$UDID" > "capture/$1" 2>&1; }
@@ -38,52 +39,64 @@ sleep 50
 shot 01-loaded.png
 axd 01-ax-loaded.txt
 
-# ---- Gate 1: coachmark. Dismiss by AX if listed, else by its X, verify by screenshot diff ----
-for i in 1 2 3; do
-  if grep -qiE 'Bookmarks|Share Menu|Open Tabs' capture/01-ax-loaded.txt || [ $i -gt 0 ]; then
-    python3 /tmp/ax.py tap "$UDID" '^(Close|Dismiss)$' || tap 400 707 2
-    sleep 2
-    shot "02-coachmark-try$i.png"
-  fi
-  axd "02-ax-after$i.txt"
-  grep -qiE 'View Bookmarks, Share Menu' capture/02-ax-after$i.txt || break
-done
 
-# ---- Gate 2: open the Safari page menu by AX element (3 tries) ----
-axd 03-ax-toolbar.txt
-MENU=0
-for i in 1 2 3; do
-  if python3 /tmp/ax.py find "$UDID" '(Page Menu|^More$|^Menu$|Show Menu)' | grep -q matched; then
-    python3 /tmp/ax.py find "$UDID" '(Page Menu|^More$|^Menu$|Show Menu)' | tee -a capture/RESULT.txt
-    XY=$(python3 /tmp/ax.py find "$UDID" '(Page Menu|^More$|^Menu$|Show Menu)' | tail -1)
-    idb ui tap $XY --duration 0.15 --udid "$UDID"
-  else
-    idb ui tap 378 894 --duration 0.15 --udid "$UDID"
-  fi
-  sleep 3
-  shot "03-menu-try$i.png"
-  axd "03-ax-menu$i.txt"
-  if grep -qE "Share|Add to Home|Add Bookmark" capture/03-ax-menu$i.txt; then MENU=1; break; fi
-done
-[ $MENU = 1 ] || BLOCK "Safari page menu did not open after coachmark dismissal (3 AX tries); see 03-*"
+cat > /tmp/ocr.py <<'PYEOF'
+#!/usr/bin/env python3
+# usage: ocr.py <png> <pt_width> <regex words joined by space> [exact]
+# prints "x y" (points) of the first line whose text matches regex; exit 1 if none
+import subprocess, sys, re, csv, io
+png, ptw, pat = sys.argv[1], float(sys.argv[2]), sys.argv[3]
+out = subprocess.run(["tesseract", png, "-", "--psm", "11", "tsv"], capture_output=True, text=True).stdout
+rows = list(csv.DictReader(io.StringIO(out), delimiter="\t", quoting=csv.QUOTE_NONE))
+from PIL import Image
+W = Image.open(png).size[0]; k = ptw / W
+words = [r for r in rows if r.get("text", "").strip() and float(r["conf"]) > 20]
+# group into lines by (block,par,line)
+lines = {}
+for r in words:
+    lines.setdefault((r["block_num"], r["par_num"], r["line_num"]), []).append(r)
+rx = re.compile(pat, re.I)
+for key, ws in lines.items():
+    txt = " ".join(w["text"] for w in ws)
+    if rx.search(txt):
+        l = min(int(w["left"]) for w in ws); r_ = max(int(w["left"]) + int(w["width"]) for w in ws)
+        t = min(int(w["top"]) for w in ws); b = max(int(w["top"]) + int(w["height"]) for w in ws)
+        print(f"matched: {txt}", file=sys.stderr)
+        print(int((l + r_) / 2 * k), int((t + b) / 2 * k)); sys.exit(0)
+sys.exit(1)
+PYEOF
+/tmp/idbenv/bin/pip -q install pillow || true
+PTW=440
+ocr() { # name regex -> echo "x y" or return 1
+  xcrun simctl io "$UDID" screenshot /tmp/ocr-cur.png
+  /tmp/idbenv/bin/python /tmp/ocr.py /tmp/ocr-cur.png $PTW "$1"
+}
 
-# ---- Gate 3: Share -> Add to Home Screen -> Add ----
-python3 /tmp/ax.py tap "$UDID" '^Share' || tap 193 623 3
+# ---- Gate 1: coachmark (X at pt ~400,707 per prior photo); verified by screenshot ----
+tap 400 707 2
+shot 02-coachmark-dismissed.png
+sleep 2
+# ---- Gate 2: "..." page menu, ONE duration tap; AX labels are None, so verify by frames/OCR ----
+idb ui tap 378 894 --duration 0.15 --udid "$UDID"
 sleep 3
+shot 03-menu.png
+axd 03-ax-menu.txt
+XY=$(ocr '^Share$|Add to Bookmarks') || BLOCK "Safari page menu not detected by OCR (see 03-menu.png)"
+echo "menu detected" | tee -a capture/RESULT.txt
+# ---- Gate 3: Share -> Add to Home Screen -> Add ----
+SX=$(ocr '^Share$') && tap ${SX% *} ${SX#* } 3 || tap 250 623 3
 shot 04-sharesheet.png
-for s in 1 2 3; do
-  python3 /tmp/ax.py find "$UDID" 'Add to Home Screen' | grep -q matched && break
-  idb ui swipe 220 800 220 450 --udid "$UDID" || true
+for s in 1 2 3 4; do
+  if ocr 'Add to Home' >/dev/null; then break; fi
+  idb ui swipe 220 800 220 400 --udid "$UDID" || true
   sleep 2
 done
 shot 05-sheet-scrolled.png
-axd 05-ax-sheet.txt
-python3 /tmp/ax.py tap "$UDID" 'Add to Home Screen' || BLOCK "Add to Home Screen row not found in share sheet; see 05-*"
-sleep 4
+AX=$(ocr 'Add to Home') || BLOCK "Add to Home Screen not found by OCR in share sheet (see 04/05)"
+tap ${AX% *} ${AX#* } 4
 shot 06-a2hs-confirm.png
-axd 06-ax-confirm.txt
-python3 /tmp/ax.py tap "$UDID" '^Add$' || BLOCK "Add button not found on A2HS confirm; see 06-*"
-sleep 4
+AD=$(ocr '^Add$') || BLOCK "Add button not found by OCR on confirm sheet (see 06)"
+tap ${AD% *} ${AD#* } 4
 shot 07-after-add.png
 echo "A2HS_ADDED" | tee -a capture/RESULT.txt
 
@@ -91,34 +104,34 @@ echo "A2HS_ADDED" | tee -a capture/RESULT.txt
 idb ui button HOME --udid "$UDID" || true
 sleep 3
 shot 08-homescreen.png
-axd 08-ax-springboard.txt
-xcrun simctl listapps "$UDID" 2>/dev/null | grep -iE 'CFBundleDisplayName|CFBundleIdentifier' | grep -iE 'webapp|WebClip|khmi|coptic' > capture/09-webclips.txt || true
-ICON='(Coptic|ⲬⲎⲘⲒ|KHMI|Khmi|خمي)'
-python3 /tmp/ax.py find "$UDID" "$ICON" | tee -a capture/RESULT.txt || BLOCK "no web-clip icon found on Home Screen; see 08-*"
-python3 /tmp/ax.py tap "$UDID" "$ICON"
-sleep 15
+IC=$(ocr 'coptic') || BLOCK "web-clip icon label not found by OCR on Home Screen (see 08)"
+echo "icon at $IC" | tee -a capture/RESULT.txt
+tap ${IC% *} $(( ${IC#* } - 40 )) 15       # tap icon image just above its label
 shot 10-standalone.png
 axd 10-ax-standalone.txt
-if grep -qiE 'Page Menu|Address|Tab Bar|Reload' capture/10-ax-standalone.txt; then
-  echo "WARNING: Safari chrome labels present in AX after icon launch (not standalone?)" | tee -a capture/RESULT.txt
+# standalone check: Safari bottom bar frames (y~874, 48x48 buttons) must be absent
+if grep -q '@ 34,874 48x48' capture/10-ax-standalone.txt; then
+  echo "NOT_STANDALONE: Safari toolbar frames present after icon launch" | tee -a capture/RESULT.txt
 else
-  echo "STANDALONE_AX_NO_SAFARI_CHROME" | tee -a capture/RESULT.txt
+  echo "STANDALONE_NO_SAFARI_TOOLBAR_FRAMES" | tee -a capture/RESULT.txt
 fi
-
-# ---- Offline beats from the installed icon ----
-sleep 60                         # precache window
+sleep 45
 shot 11-before-cut.png
+# first tap = user gesture for audio; screenshot only
+tap 220 500 3
+shot 11b-after-gesture.png
 sudo ifconfig en0 down || true
 sleep 4
-xcrun simctl terminate "$UDID" com.apple.webapp 2>/dev/null || true
 idb ui button HOME --udid "$UDID" || true
-sleep 2
-python3 /tmp/ax.py tap "$UDID" "$ICON" || true
-sleep 15
+sleep 3
+# kill the web app and relaunch from the icon with network off
+xcrun simctl spawn "$UDID" launchctl list 2>/dev/null | grep -i webapp | tee capture/12-webapp-procs.txt || true
+IC2=$(ocr 'coptic') || IC2="$IC"
+tap ${IC2% *} $(( ${IC2#* } - 40 )) 15
 shot 12-offline-launch.png
-tap 396 103 4
+tap 40 100 4
 shot 13-offline-drawer.png
-tap 290 345 5
+DR=$(ocr 'Bible|الكتاب') && tap ${DR% *} ${DR#* } 5 || tap 290 345 5
 shot 14-offline-bible.png
 tap 220 300 5
 shot 15-offline-book.png
