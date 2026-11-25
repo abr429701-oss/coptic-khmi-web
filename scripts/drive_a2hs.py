@@ -141,55 +141,111 @@ def launch_icon(tag, press_home=False):
     open(f"{CAP}/RESULT.txt", "a").write(("LAUNCHED_BUT_SAFARI_TEXT_PRESENT\n" if bar else "LAUNCHED_APP_CONTENT_NO_SAFARI_TEXT\n"))
     return lines
 
+def key_return():
+    subprocess.run(["idb", "ui", "key", "40", "--udid", UDID], capture_output=True); time.sleep(2)
 def sig(lines): return set(t for _, _, t in lines)
 def changed(a, b):
     A, B = sig(a), sig(b)
     return len(A ^ B) > max(3, 0.25 * max(len(A | B), 1))
-def key_return():
-    subprocess.run(["idb", "ui", "key", "40", "--udid", UDID], capture_output=True); time.sleep(2)
-def feature_proof(tag, book_idx, chap_idx, query):
-    R = lambda m: open(f"{CAP}/RESULT.txt", "a").write(f"{tag.upper()}_{m}\n")
-    p, base = snap(tag + "-f0-base")
-    if classify(base) != "app_page": stop("app content not visible before feature taps")
+def R(m): open(f"{CAP}/RESULT.txt", "a").write(m + "\n")
+def texts(lines): return [t for _, _, t in lines]
+def snapd(tag):
+    """snap; if the OS notification-permission dialog is up, tap Don't Allow ONCE, then re-snap."""
+    p, lines = snap(tag)
+    if has(lines, r"Would Like to Send|Send You\s*Notif"):
+        d = find(lines, r"Don.?t Allow")
+        log("notification dialog up; tapping Don't Allow once", d)
+        if d:
+            tap(d[0], d[1], wait=4); R("NOTIFICATION_DIALOG_DISMISSED_DONT_ALLOW")
+            p, lines = snap(tag + "-after-dialog")
+        else: stop("notification dialog but no Don't Allow label found")
+    return p, lines
+def green_count(p, box=(420, 1080, 900, 1230)):
+    out = sh("/tmp/ocr %s green %d %d %d %d" % ((p,) + box)).strip()
+    try: return int(out)
+    except: return -1
+def wait_ready(maxsec=360):
+    t0 = time.time()
+    while time.time() - t0 < maxsec:
+        p, lines = snapd("ready-check")
+        gc = green_count(p); log("ready check green px", gc, "t+%ds" % (time.time() - t0))
+        if gc > 300: R("OFFLINE_READY_CHIP_GREEN_AFTER_%ds" % (time.time() - t0)); return True
+        time.sleep(20)
+    R("OFFLINE_READY_NOT_REACHED"); stop("ready-offline chip not green within wait")
+EN_RX = r"November|Wed|Thu|Fri|Sat|Sun|Mon|Tue|Hator|Coptic Dictionary"
+def ensure_english(tag):
+    for k in range(3):
+        p, lines = snapd(f"{tag}-lang{k}")
+        if has(lines, r"November|Nov|Wed|WED"): R("UI_ENGLISH"); return lines
+        log("not English yet; tapping AB language toggle once", k)
+        tap(357, 323, wait=6)
+    stop("could not reach English UI via AB toggle")
+def search_proof(tag, query):
+    p, base = snapd(tag + "-search-base")
     tap(200, 327, wait=4)
-    subprocess.run(["idb", "ui", "text", query, "--udid", UDID], capture_output=True); time.sleep(8)
-    p, s1 = snap(tag + "-f1-search-typed")
-    log("OCR search", [t for _, _, t in s1][:60])
-    if changed(base, s1): R("SEARCH_SCREEN_CHANGED_CHECK_PIXELS")
-    else: R("SEARCH_NO_VISIBLE_CHANGE")
-    p, s1b = snap(tag + "-f1b-search-results")
-    key_return(); p, s1c = snap(tag + "-f1c-after-return")
-    tap(357, 323, wait=8)
-    p, s2 = snap(tag + "-f2-bible-button")
-    log("OCR bible", [t for _, _, t in s2][:60])
-    if not changed(s1c, s2): stop("Bible button tap produced no visible change")
-    R("BIBLE_SCREEN_OPENED")
-    cands = [l for l in s2 if 330 < l[1] < 850 and l[0] > 20 and l[2] not in sig(s1c) and len(l[2]) >= 2]
-    log("book candidates", cands[:12])
-    if len(cands) <= book_idx: stop("no book candidate lines")
-    b = cands[book_idx]; tap(b[0], b[1], wait=8)
-    p, s3 = snap(tag + "-f3-book"); log("OCR book", [t for _, _, t in s3][:60])
-    if not changed(s2, s3): stop("book tap produced no visible change")
-    R("BOOK_OPENED")
-    nums = [l for l in s3 if re.fullmatch(r"\d{1,3}", l[2]) and 330 < l[1] < 850]
-    log("chapter candidates", nums[:20])
-    if len(nums) <= chap_idx: stop("no chapter number candidates")
-    c = nums[chap_idx]; tap(c[0], c[1], wait=8)
-    p, s4 = snap(tag + "-f4-chapter"); log("OCR chapter", [t for _, _, t in s4][:80])
-    if not changed(s3, s4): stop("chapter tap produced no visible change")
-    R("CHAPTER_OPENED")
-    swipe_up(); snap(tag + "-f5-chapter-scrolled")
+    subprocess.run(["idb", "ui", "text", query, "--udid", UDID], capture_output=True); time.sleep(10)
+    p, s1 = snapd(tag + "-search-typed")
+    time.sleep(10); p, s2 = snapd(tag + "-search-results")
+    log("OCR search", texts(s2)[:80])
+    rows = [l for l in s2 if 400 < l[1] < 800 and l[2].lower() != query]
+    if len(rows) >= 2: R(tag.upper() + "_SEARCH_RESULT_ROWS_OCR_%d" % len(rows))
+    else: R(tag.upper() + "_SEARCH_NO_RESULT_ROWS_FOUND"); log("no result rows in OCR; check pixels")
+    key_return(); snapd(tag + "-search-after-return")
+def bible_proof(tag, book, chap_tap=None):
+    tap(41, 105, wait=5)
+    p, l1 = snapd(tag + "-drawer"); log("OCR drawer", texts(l1)[:60])
+    b = find(l1, r"Holy Bible|Coptic Holy Bible|Bible")
+    if not b: stop("drawer open but no Bible label in OCR (see pixels)")
+    R(tag.upper() + "_DRAWER_BIBLE_LABEL_FOUND")
+    tap(b[0], b[1], wait=10)
+    p, l2 = snapd(tag + "-bible-screen"); log("OCR bible screen", texts(l2)[:80])
+    if not has(l2, r"Old Testament|New Testament|Genesis|Holy Bible"): stop("Bible screen labels not seen")
+    R(tag.upper() + "_BIBLE_SCREEN_LABELS_SEEN")
+    found = None
+    for k in range(5):
+        found = find(l2, r"^" + book + r"\b|\b" + book + r"$|" + book)
+        if found: break
+        swipe_up(); p, l2 = snapd(tag + "-bible-scroll%d" % k)
+    if not found: stop("book %s not found in OCR" % book)
+    tap(found[0], found[1], wait=8)
+    p, l3 = snapd(tag + "-book-opened"); log("OCR book", texts(l3)[:80])
+    if not changed(l2, l3): stop("book tap produced no visible change")
+    R(tag.upper() + "_BOOK_OPENED_" + book)
+    if chap_tap:
+        c = find(l3, r"^%s$" % chap_tap)
+        if c: tap(c[0], c[1], wait=8); p, l4 = snapd(tag + "-chapter"); log("OCR chapter", texts(l4)[:80]); R(tag.upper() + "_CHAPTER_TAPPED_" + chap_tap)
+    time.sleep(5); snapd(tag + "-bible-text-final"); swipe_up(); snapd(tag + "-bible-text-scrolled")
+def cold_relaunch_prepare():
+    out = sh("xcrun simctl listapps %s" % UDID)
+    ids = sorted(set(re.findall(r'(com\.apple\.webapp[A-Za-z0-9.\-]*)', out)))
+    log("web clip bundle ids", ids)
+    open(f"{CAP}/listapps-ids.txt", "w").write("\n".join(ids))
+    for i in ids: log("terminate", i, sh("xcrun simctl terminate %s %s 2>&1" % (UDID, i)))
+    R("COLD_TERMINATED_IDS_%d" % len(ids))
+def sim_net_check():
+    nonce = int(time.time())
+    sh("xcrun simctl openurl %s 'https://example.org/?n=%d'" % (UDID, nonce)); time.sleep(25)
+    p, l = snapd("simnet-safari-unique-url"); log("OCR simnet", texts(l)[:40])
+    if has(l, r"Not Connected|not connected|offline|Internet|cannot|Cannot|Unable"): R("SIM_SAFARI_UNIQUE_URL_FAILED_AS_OFFLINE")
+    else: R("SIM_SAFARI_UNIQUE_URL_SHOWS_NO_ERROR_TEXT_CHECK_PIXELS")
+    go_home()
 
-if MODE == "baseline":
-    sh("xcrun simctl openurl %s https://example.com" % UDID); time.sleep(15)
-    snap("net-sim-safari-example"); go_home()
-if MODE == "launch":
-    lines = launch_icon("launch")
-    feature_proof("online", 0, 0, "love")
-if MODE == "offline":
-    log("terminate", sh("xcrun simctl terminate %s com.apple.webapp 2>&1" % UDID))
-    sh("xcrun simctl openurl %s https://example.com" % UDID); time.sleep(15)
-    snap("net-sim-safari-example-offline")
-    lines = launch_icon("offline", press_home=True)
-    time.sleep(5)
-    feature_proof("offline", 3, 2, "water")
+if MODE == "online2":
+    launch_icon("launch")
+    wait_ready()
+    snapd("online-home")
+    search_proof("online", "love")
+    ensure_english("online")
+    bible_proof("online", "Genesis", chap_tap="1")
+if MODE == "simnet":
+    sim_net_check()
+if MODE == "offline2":
+    cold_relaunch_prepare()
+    launch_icon("offline", press_home=True)
+    time.sleep(10)
+    p, l = snapd("offline-home")
+    if classify(l) != "app_page": stop("app content not visible offline after cold launch")
+    R("OFFLINE_COLD_LAUNCH_APP_CONTENT")
+    search_proof("offline", "love")
+    ensure_english("offline")
+    bible_proof("offline", "Ruth", chap_tap="2")
