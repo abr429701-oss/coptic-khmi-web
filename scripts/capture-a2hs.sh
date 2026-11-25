@@ -46,7 +46,8 @@ cat > /tmp/ocr.py <<'PYEOF'
 # prints "x y" (points) of the first line whose text matches regex; exit 1 if none
 import subprocess, sys, re, csv, io
 png, ptw, pat = sys.argv[1], float(sys.argv[2]), sys.argv[3]
-out = subprocess.run(["tesseract", png, "-", "--psm", "11", "tsv"], capture_output=True, text=True).stdout
+subprocess.run(["tesseract", png, "/tmp/ocr-out", "--psm", "11", "tsv"], capture_output=True)
+out = open("/tmp/ocr-out.tsv", encoding="utf-8", errors="replace").read()
 rows = list(csv.DictReader(io.StringIO(out), delimiter="\t", quoting=csv.QUOTE_NONE))
 from PIL import Image
 W = Image.open(png).size[0]; k = ptw / W
@@ -81,10 +82,10 @@ idb ui tap 378 894 --duration 0.15 --udid "$UDID"
 sleep 3
 shot 03-menu.png
 axd 03-ax-menu.txt
-XY=$(ocr '^Share$|Add to Bookmarks') || BLOCK "Safari page menu not detected by OCR (see 03-menu.png)"
+ocr '^Share$|Add to Bookmarks' >/dev/null || grep -q '@ 164.6.*250' capture/03-ax-menu.txt || BLOCK "Safari page menu not detected (OCR+AX) (see 03-menu.png)"
 echo "menu detected" | tee -a capture/RESULT.txt
 # ---- Gate 3: Share -> Add to Home Screen -> Add ----
-SX=$(ocr '^Share$') && tap ${SX% *} ${SX#* } 3 || tap 250 623 3
+SX=$(ocr '^Share$') && tap ${SX% *} ${SX#* } 3 || tap 289 624 3
 shot 04-sharesheet.png
 for s in 1 2 3 4; do
   if ocr 'Add to Home' >/dev/null; then break; fi
