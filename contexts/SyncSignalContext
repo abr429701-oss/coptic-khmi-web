@@ -1,0 +1,11 @@
+import React, { createContext } from "react";
+
+interface SyncSignalContextValue {
+  syncCounter: number;
+  triggerSync: () => void;
+}
+
+export const SyncSignalContext = createContext<SyncSignalContextValue>({
+  syncCounter: 0,
+  triggerSync: () => {},
+});

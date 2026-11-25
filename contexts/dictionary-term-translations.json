@@ -1,0 +1,757 @@
+{
+  "قبطي": {
+    "en": "Coptic",
+    "fr": "copte",
+    "de": "Koptisch"
+  },
+  "يوناني": {
+    "en": "Greek",
+    "fr": "grec",
+    "de": "Griechisch"
+  },
+  "عبري": {
+    "en": "Hebrew",
+    "fr": "hébreu",
+    "de": "Hebräisch"
+  },
+  "لاتيني": {
+    "en": "Latin",
+    "fr": "latin",
+    "de": "Latein"
+  },
+  "آرامي": {
+    "en": "Aramaic",
+    "fr": "araméen",
+    "de": "Aramäisch"
+  },
+  "سرياني": {
+    "en": "Syriac",
+    "fr": "syriaque",
+    "de": "Syrisch"
+  },
+  "اسم مذكر": {
+    "en": "masculine noun",
+    "fr": "nom masculin",
+    "de": "maskulines Nomen"
+  },
+  "فعل، صيغة مصدرية للفعل يأتي بعدها أداة المفعول ثم المفعول": {
+    "en": "verb; infinitive/verbal-noun form of the verb followed by an object marker then the object",
+    "fr": "verbe ; forme infinitive/nom verbal du verbe suivie d'un marqueur d'objet puis de l'objet",
+    "de": "Verb; Infinitiv/Verbalnomen‑Form des Verbs, gefolgt von einem Objektmarker und dann dem Objekt"
+  },
+  "اسم مؤنث": {
+    "en": "feminine noun",
+    "fr": "nom féminin",
+    "de": "feminines Nomen"
+  },
+  "فعل، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "verb; pronominal form followed by an object pronoun/clitic",
+    "fr": "verbe ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Verb; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "صفة": {
+    "en": "adjective",
+    "fr": "adjectif",
+    "de": "Adjektiv"
+  },
+  "فعل، صيغة للفعل يأتي بعدها المفعول مباشرة بدون أداة مفعول": {
+    "en": "verb; verb form after which the object follows directly without an object marker",
+    "fr": "verbe ; forme verbale après laquelle l'objet suit directement sans marqueur d'objet",
+    "de": "Verb; Verbform, nach der das Objekt direkt ohne Objektmarker folgt"
+  },
+  "صفة، صيغة وصفية - حال ، يأتي قبلها الضمير": {
+    "en": "adjective; descriptive — adverbial form, preceded by a pronoun",
+    "fr": "adjectif ; forme descriptive — adverbiale, précédée d'un pronom",
+    "de": "Adjektiv; deskriptive — adverbiale Form, vorangestellt von einem Pronomen"
+  },
+  "اسم": {
+    "en": "noun",
+    "fr": "nom",
+    "de": "Nomen"
+  },
+  "اسم جمع": {
+    "en": "plural noun",
+    "fr": "nom pluriel",
+    "de": "Pluralnomen"
+  },
+  "فعل": {
+    "en": "verb",
+    "fr": "verbe",
+    "de": "Verb"
+  },
+  "ظرف": {
+    "en": "adverb",
+    "fr": "adverbe",
+    "de": "Adverb"
+  },
+  "أداة ربط": {
+    "en": "conjunction",
+    "fr": "conjonction",
+    "de": "Konjunktion"
+  },
+  "اسم مذكر ومؤنث": {
+    "en": "masculine and feminine noun",
+    "fr": "nom masculin et féminin",
+    "de": "maskulines und feminines Nomen"
+  },
+  "حرف جر": {
+    "en": "preposition",
+    "fr": "préposition",
+    "de": "Präposition"
+  },
+  "رقم": {
+    "en": "numeral",
+    "fr": "numéral",
+    "de": "Zahlwort"
+  },
+  "صفة، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "adjective; pronominal form followed by an object pronoun/clitic",
+    "fr": "adjectif ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Adjektiv; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "صفة، صيغة وصفية - حال": {
+    "en": "adjective; descriptive — adverbial form",
+    "fr": "adjectif ; forme descriptive — adverbiale",
+    "de": "Adjektiv; deskriptive — adverbiale Form"
+  },
+  "حرف جر، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "preposition; pronominal form followed by an object pronoun/clitic",
+    "fr": "préposition ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Präposition; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "ضمير": {
+    "en": "pronoun",
+    "fr": "pronom",
+    "de": "Pronomen"
+  },
+  "حرف": {
+    "en": "particle",
+    "fr": "particule",
+    "de": "Partikel"
+  },
+  "أداة نفي": {
+    "en": "negation particle",
+    "fr": "particule de négation",
+    "de": "Negationspartikel"
+  },
+  "اسم، صيغة للفعل يأتي بعدها المفعول مباشرة بدون أداة مفعول": {
+    "en": "noun; verb-derived form after which the object follows directly without an object marker",
+    "fr": "nom ; forme dérivée du verbe après laquelle l'objet suit directement sans marqueur d'objet",
+    "de": "Nomen; vom Verb abgeleitete Form, nach der das Objekt direkt ohne Objektmarker folgt"
+  },
+  "فعل، صيغة وصفية - حال": {
+    "en": "verb; descriptive — adverbial form",
+    "fr": "verbe ; forme descriptive — adverbiale",
+    "de": "Verb; deskriptive — adverbiale Form"
+  },
+  "أداة": {
+    "en": "particle",
+    "fr": "particule",
+    "de": "Partikel"
+  },
+  "فعل أمر": {
+    "en": "imperative verb",
+    "fr": "verbe à l'impératif",
+    "de": "Imperativverb"
+  },
+  "اسم، صيغة مركبة": {
+    "en": "noun; compound form",
+    "fr": "nom ; forme composée",
+    "de": "Nomen; zusammengesetzte Form"
+  },
+  "أداة ملكية": {
+    "en": "possessive particle",
+    "fr": "particule possessive",
+    "de": "Possessivpartikel"
+  },
+  "أداة استفهام": {
+    "en": "interrogative particle",
+    "fr": "particule interrogative",
+    "de": "Interrogativpartikel"
+  },
+  "فعل مذكر": {
+    "en": "masculine verb",
+    "fr": "verbe masculin",
+    "de": "maskulines Verb"
+  },
+  "ضمير ملكية": {
+    "en": "possessive pronoun",
+    "fr": "pronom possessif",
+    "de": "Possessivpronomen"
+  },
+  "جملة": {
+    "en": "sentence",
+    "fr": "phrase",
+    "de": "Satz"
+  },
+  "اسم، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "noun; pronominal form followed by an object pronoun/clitic",
+    "fr": "nom ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Nomen; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "ظرف، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "adverb; pronominal form followed by an object pronoun/clitic",
+    "fr": "adverbe ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Adverb; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "ضمير وصل": {
+    "en": "relative pronoun",
+    "fr": "pronom relatif",
+    "de": "Relativpronomen"
+  },
+  "فعل، صيغة مركبة": {
+    "en": "verb; compound form",
+    "fr": "verbe ; forme composée",
+    "de": "Verb; zusammengesetzte Form"
+  },
+  "أداة تأكيد": {
+    "en": "emphatic particle",
+    "fr": "particule emphatique",
+    "de": "emphatische Partikel"
+  },
+  "adv.": {
+    "en": "adverb",
+    "fr": "adverbe",
+    "de": "Adverb"
+  },
+  "اسم مذكر وجمع": {
+    "en": "masculine noun; plural",
+    "fr": "nom masculin ; pluriel",
+    "de": "maskulines Nomen; Plural"
+  },
+  "صفة، صيغة مركبة": {
+    "en": "adjective; compound form",
+    "fr": "adjectif ; forme composée",
+    "de": "Adjektiv; zusammengesetzte Form"
+  },
+  "زائدة ، prefix": {
+    "en": "augmentative prefix",
+    "fr": "préfixe augmentatif",
+    "de": "augmentatives Präfix"
+  },
+  "ضمير ملكية مذكر": {
+    "en": "masculine possessive pronoun",
+    "fr": "pronom possessif masculin",
+    "de": "maskulines Possessivpronomen"
+  },
+  "أداة ملكية مؤنث": {
+    "en": "feminine possessive particle",
+    "fr": "particule possessive féminine",
+    "de": "feminine Possessivpartikel"
+  },
+  "توكيد": {
+    "en": "emphasis",
+    "fr": "mise en emphase",
+    "de": "Betonung"
+  },
+  "prefix بادئة": {
+    "en": "prefix (baadiya)",
+    "fr": "préfixe (baadiya)",
+    "de": "Präfix (baadiya)"
+  },
+  "أداة تعجب": {
+    "en": "exclamatory particle",
+    "fr": "particule exclamative",
+    "de": "exklamative Partikel"
+  },
+  "فعل مذكر ومؤنث": {
+    "en": "verb, masculine and feminine",
+    "fr": "verbe masculin et féminin",
+    "de": "Verb, maskulin und feminin"
+  },
+  "فعل مؤنث": {
+    "en": "feminine verb",
+    "fr": "verbe féminin",
+    "de": "feminines Verb"
+  },
+  "أداة إشارة": {
+    "en": "demonstrative particle",
+    "fr": "particule démonstrative",
+    "de": "demonstrative Partikel"
+  },
+  "مذكر": {
+    "en": "masculine",
+    "fr": "masculin",
+    "de": "maskulin"
+  },
+  "حرف جر، صيغة للفعل يأتي بعدها المفعول مباشرة بدون أداة مفعول": {
+    "en": "preposition; verb form after which the object follows directly without an object marker",
+    "fr": "préposition ; forme verbale après laquelle l'objet suit directement sans marqueur d'objet",
+    "de": "Präposition; Verbform, nach der das Objekt direkt ohne Objektmarker folgt"
+  },
+  "اسم، مذكر ، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "noun, masculine; pronominal form followed by an object pronoun/clitic",
+    "fr": "nom masculin ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Nomen, maskulin; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "صفة مذكر": {
+    "en": "masculine adjective",
+    "fr": "adjectif masculin",
+    "de": "maskulines Adjektiv"
+  },
+  "أداة شرط": {
+    "en": "conditional particle",
+    "fr": "particule conditionnelle",
+    "de": "Konditionalpartikel"
+  },
+  "ضمير وصل مذكر": {
+    "en": "masculine relative pronoun",
+    "fr": "pronom relatif masculin",
+    "de": "maskulines Relativpronomen"
+  },
+  "علامة المصدر": {
+    "en": "infinitive/verbal-noun marker",
+    "fr": "marqueur de l'infinitif/nom verbal",
+    "de": "Infinitiv/Verbalnomen‑Marker"
+  },
+  "أداة عطف": {
+    "en": "conjunction",
+    "fr": "conjonction",
+    "de": "Konjunktion"
+  },
+  "اسم، مؤنث ، صيغة ضميرية": {
+    "en": "noun, feminine; pronominal form",
+    "fr": "nom féminin ; forme pronominale",
+    "de": "Nomen, feminin; pronominale Form"
+  },
+  "ضمير وصل، صيغة مركبة": {
+    "en": "relative pronoun; compound form",
+    "fr": "pronom relatif ; forme composée",
+    "de": "Relativpronomen; zusammengesetzte Form"
+  },
+  "فعل، صيغة وصفية - حال ، يأتي قبلها الضمير": {
+    "en": "verb; descriptive — adverbial form, preceded by a pronoun",
+    "fr": "verbe ; forme descriptive — adverbiale, précédée d'un pronom",
+    "de": "Verb; deskriptive — adverbiale Form, vorangestellt von einem Pronomen"
+  },
+  "اسم، مذكر ، صيغة ضميرية": {
+    "en": "noun, masculine; pronominal form",
+    "fr": "nom masculin ; forme pronominale",
+    "de": "Nomen, maskulin; pronominale Form"
+  },
+  "صفة، صيغة للفعل يأتي بعدها المفعول مباشرة بدون أداة مفعول": {
+    "en": "adjective; verb form after which the object follows directly without an object marker",
+    "fr": "adjectif ; forme verbale après laquelle l'objet suit directement sans marqueur d'objet",
+    "de": "Adjektiv; Verbform, nach der das Objekt direkt ohne Objektmarker folgt"
+  },
+  "اسم، صيغة مصدرية للفعل يأتي بعدها أداة المفعول ثم المفعول": {
+    "en": "noun; infinitive/verbal-noun form of the verb followed by an object marker then the object",
+    "fr": "nom ; forme infinitive/nom verbal du verbe suivie d'un marqueur d'objet puis de l'objet",
+    "de": "Nomen; Infinitiv/Verbalnomen‑Form des Verbs, gefolgt von einem Objektmarker und dann dem Objekt"
+  },
+  "أداة نفي، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "negation particle; pronominal form followed by an object pronoun/clitic",
+    "fr": "particule de négation ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Negationspartikel; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "أداة ملكية، صيغة مركبة": {
+    "en": "possessive particle; compound form",
+    "fr": "particule possessive ; forme composée",
+    "de": "Possessivpartikel; zusammengesetzte Form"
+  },
+  "أداة تعريف مذكر": {
+    "en": "masculine definite article",
+    "fr": "article défini masculin",
+    "de": "maskularer bestimmter Artikel"
+  },
+  "ظرف، صيغة للفعل يأتي بعدها المفعول مباشرة بدون أداة مفعول": {
+    "en": "adverb; verb form after which the object follows directly without an object marker",
+    "fr": "adverbe ; forme verbale après laquelle l'objet suit directement sans marqueur d'objet",
+    "de": "Adverb; Verbform, nach der das Objekt direkt ohne Objektmarker folgt"
+  },
+  "فعل، فعل منعكس": {
+    "en": "reflexive verb",
+    "fr": "verbe réfléchi",
+    "de": "reflexives Verb"
+  },
+  "حرف جر ، ضمير، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "preposition; pronoun; pronominal form followed by an object pronoun/clitic",
+    "fr": "préposition ; pronom ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Präposition; Pronomen; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "أداة تنكير": {
+    "en": "indefinite article",
+    "fr": "article indéfini",
+    "de": "unbestimmter Artikel"
+  },
+  "زائدة prefix، صيغة مركبة": {
+    "en": "augmentative prefix; compound form",
+    "fr": "préfixe augmentatif ; forme composée",
+    "de": "augmentatives Präfix; zusammengesetzte Form"
+  },
+  "صيغة تفضيل، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "comparative/superlative form; pronominal form followed by an object pronoun/clitic",
+    "fr": "forme comparative/superlative ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Komparativ/Superlativ‑Form; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "أداة تعريف مؤنث": {
+    "en": "feminine definite article",
+    "fr": "article défini féminin",
+    "de": "femininer bestimmter Artikel"
+  },
+  "أداة وصل": {
+    "en": "connecting particle",
+    "fr": "particule de liaison",
+    "de": "Verknüpfungspartikel"
+  },
+  "علامة المضاف إليه": {
+    "en": "genitive marker",
+    "fr": "marqueur du génitif",
+    "de": "Genitivmarker"
+  },
+  "علامة المفعول": {
+    "en": "object marker",
+    "fr": "marqueur d'objet",
+    "de": "Objektmarker"
+  },
+  "ضمير، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "pronoun; pronominal form followed by an object pronoun/clitic",
+    "fr": "pronom ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Pronomen; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "فعل جمع": {
+    "en": "plural verb",
+    "fr": "verbe pluriel",
+    "de": "Pluralverb"
+  },
+  "أداة تعريف جمع": {
+    "en": "plural definite article",
+    "fr": "article défini pluriel",
+    "de": "pluraler bestimmter Artikel"
+  },
+  "أداة ملكية، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "possessive particle; pronominal form followed by an object pronoun/clitic",
+    "fr": "particule possessive ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Possessivpartikel; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "حرف عطف": {
+    "en": "conjunction",
+    "fr": "conjonction",
+    "de": "Konjunktion"
+  },
+  "أداة أستفهام": {
+    "en": "interrogative particle",
+    "fr": "particule interrogative",
+    "de": "Interrogativpartikel"
+  },
+  "عدد": {
+    "en": "number/numeral",
+    "fr": "nombre/numéral",
+    "de": "Zahl/Numeral"
+  },
+  "حرف مؤنث": {
+    "en": "feminine particle",
+    "fr": "particule féminine",
+    "de": "feminine Partikel"
+  },
+  "prefix زائدة": {
+    "en": "augmentative prefix",
+    "fr": "préfixe augmentatif",
+    "de": "augmentatives Präfix"
+  },
+  "ضمير جمع": {
+    "en": "plural pronoun",
+    "fr": "pronom pluriel",
+    "de": "Pluralpronomen"
+  },
+  "صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "pronominal form followed by an object pronoun/clitic",
+    "fr": "forme pronominale suivie d'un pronom objet/clitique",
+    "de": "pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "حرف مذكر": {
+    "en": "masculine particle",
+    "fr": "particule masculine",
+    "de": "maskuline Partikel"
+  },
+  "اسم أشارة": {
+    "en": "demonstrative noun",
+    "fr": "nom démonstratif",
+    "de": "demonstratives Nomen"
+  },
+  "توكيد، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "emphasis; pronominal form followed by an object pronoun/clitic",
+    "fr": "mise en emphase ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Betonung; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "اسم، مذكر - مؤنث": {
+    "en": "masculine–feminine noun",
+    "fr": "nom masculin–féminin",
+    "de": "maskulines–feminines Nomen"
+  },
+  "حال": {
+    "en": "adverbial",
+    "fr": "adverbial",
+    "de": "Adverbial"
+  },
+  "جمع": {
+    "en": "plural",
+    "fr": "pluriel",
+    "de": "Plural"
+  },
+  "صفة مؤنث": {
+    "en": "feminine adjective",
+    "fr": "adjectif féminin",
+    "de": "feminines Adjektiv"
+  },
+  "prefix بادئة، صيغة مركبة": {
+    "en": "prefix; compound form",
+    "fr": "préfixe ; forme composée",
+    "de": "Präfix; zusammengesetzte Form"
+  },
+  "أداة استفهام، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "interrogative particle; pronominal form followed by an object pronoun/clitic",
+    "fr": "particule interrogative ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Interrogativpartikel; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "فعل أمر، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "imperative verb; pronominal form followed by an object pronoun/clitic",
+    "fr": "verbe à l'impératif ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Imperativverb; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "فعل أمر، صيغة للفعل يأتي بعدها المفعول مباشرة بدون أداة مفعول": {
+    "en": "imperative verb; verb form after which the object follows directly without an object marker",
+    "fr": "verbe à l'impératif ; forme verbale après laquelle l'objet suit directement sans marqueur d'objet",
+    "de": "Imperativverb; Verbform, nach der das Objekt direkt ohne Objektmarker folgt"
+  },
+  "فعل أمر، صيغة مصدرية للفعل يأتي بعدها أداة المفعول ثم المفعول": {
+    "en": "imperative verb; infinitive/verbal-noun form of the verb followed by an object marker then the object",
+    "fr": "verbe à l'impératif ; forme infinitive/nom verbal du verbe suivie d'un marqueur d'objet puis de l'objet",
+    "de": "Imperativverb; Infinitiv/Verbalnomen‑Form des Verbs, gefolgt von einem Objektmarker und dann dem Objekt"
+  },
+  "أداة ربط، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "connecting particle; pronominal form followed by an object pronoun/clitic",
+    "fr": "particule de liaison ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Verknüpfungspartikel; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "علامة الحال": {
+    "en": "adverbial marker",
+    "fr": "marqueur adverbial",
+    "de": "Adverbialmarker"
+  },
+  "علامة اسم الفاعل": {
+    "en": "active participle marker",
+    "fr": "marqueur du participe actif",
+    "de": "Aktivpartizip‑Marker"
+  },
+  "أداة مفعول": {
+    "en": "object marker",
+    "fr": "marqueur d'objet",
+    "de": "Objektmarker"
+  },
+  "بادئة ، prefix": {
+    "en": "prefix",
+    "fr": "préfixe",
+    "de": "Präfix"
+  },
+  "ظرف، صيغة مصدرية للفعل يأتي بعدها أداة المفعول ثم المفعول": {
+    "en": "adverb; infinitive/verbal-noun form of the verb followed by an object marker then the object",
+    "fr": "adverbe ; forme infinitive/nom verbal du verbe suivie d'un marqueur d'objet puis de l'objet",
+    "de": "Adverb; Infinitiv/Verbalnomen‑Form des Verbs, gefolgt von einem Objektmarker und dann dem Objekt"
+  },
+  "علامة الماضي": {
+    "en": "past tense marker",
+    "fr": "marqueur du passé",
+    "de": "Vergangenheitsmarker"
+  },
+  "ضمير إشارة": {
+    "en": "demonstrative pronoun",
+    "fr": "pronom démonstratif",
+    "de": "Demonstrativpronomen"
+  },
+  "حرف ، رقم": {
+    "en": "particle; numeral",
+    "fr": "particule ; numéral",
+    "de": "Partikel; Numeral"
+  },
+  "اسم إشارة مؤنث": {
+    "en": "feminine demonstrative noun",
+    "fr": "nom démonstratif féminin",
+    "de": "feminines demonstratives Nomen"
+  },
+  "علامة المصدر، صيغة مركبة": {
+    "en": "infinitive/verbal-noun marker; compound form",
+    "fr": "marqueur de l'infinitif/nom verbal ; forme composée",
+    "de": "Infinitiv/Verbalnomen‑Marker; zusammengesetzte Form"
+  },
+  "ضمير ملكية مؤنث": {
+    "en": "feminine possessive pronoun",
+    "fr": "pronom possessif féminin",
+    "de": "feminines Possessivpronomen"
+  },
+  "أداة تنبيه": {
+    "en": "attention particle",
+    "fr": "particule d'attention",
+    "de": "Aufmerksamkeits‑Partikel"
+  },
+  "أداة تمني، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "wish particle; pronominal form followed by an object pronoun/clitic",
+    "fr": "particule de souhait ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Wunschartikel; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "أداة تمني، صيغة مركبة": {
+    "en": "wish particle; compound form",
+    "fr": "particule de souhait ; forme composée",
+    "de": "Wunschartikel; zusammengesetzte Form"
+  },
+  "أداة نداء": {
+    "en": "vocative particle",
+    "fr": "particule vocative",
+    "de": "Vokativpartikel"
+  },
+  "علامة زمن المستقبل": {
+    "en": "future tense marker",
+    "fr": "marqueur du futur",
+    "de": "Futurmarker"
+  },
+  "اسم إشارة جمع": {
+    "en": "demonstrative plural",
+    "fr": "démonstratif pluriel",
+    "de": "demonstrativ, Plural"
+  },
+  "حرف جر، صيغة مركبة": {
+    "en": "preposition; compound form",
+    "fr": "préposition ; forme composée",
+    "de": "Präposition; zusammengesetzte Form"
+  },
+  "أداة تعريف": {
+    "en": "definite article",
+    "fr": "article défini",
+    "de": "bestimmter Artikel"
+  },
+  "ضمير مذكر": {
+    "en": "masculine pronoun",
+    "fr": "pronom masculin",
+    "de": "maskulines Pronomen"
+  },
+  "أداة، صيغة مركبة": {
+    "en": "particle; compound form",
+    "fr": "particule ; forme composée",
+    "de": "Partikel; zusammengesetzte Form"
+  },
+  "أداة نفي، صيغة مركبة": {
+    "en": "negation particle; compound form",
+    "fr": "particule de négation ; forme composée",
+    "de": "Negationspartikel; zusammengesetzte Form"
+  },
+  "أداة تنكير مذكر": {
+    "en": "masculine indefinite article",
+    "fr": "article indéfini masculin",
+    "de": "maskuliner unbestimmter Artikel"
+  },
+  "اسم موصول": {
+    "en": "relative pronoun",
+    "fr": "pronom relatif",
+    "de": "Relativpronomen"
+  },
+  "أداة، صيغة ضميرية يأتي بعدها ضمير مفعول": {
+    "en": "particle; pronominal form followed by an object pronoun/clitic",
+    "fr": "particule ; forme pronominale suivie d'un pronom objet/clitique",
+    "de": "Partikel; pronominale Form, gefolgt von einem Objektpronomen/Clitikum"
+  },
+  "اسم أشارة مذكر": {
+    "en": "masculine demonstrative noun",
+    "fr": "nom démonstratif masculin",
+    "de": "maskulines demonstratives Nomen"
+  },
+  "اسم، مذكر ، يأتي بعدها ضمير": {
+    "en": "noun, masculine; followed by a pronoun",
+    "fr": "nom masculin ; suivi d'un pronom",
+    "de": "Nomen, maskulin; gefolgt von einem Pronomen"
+  },
+  "اسم مؤنث وجمع": {
+    "en": "feminine noun and plural",
+    "fr": "nom féminin et pluriel",
+    "de": "feminines Nomen und Plural"
+  },
+  "أداة أشارة مؤنث": {
+    "en": "feminine demonstrative particle",
+    "fr": "particule démonstrative féminine",
+    "de": "feminine demonstrative Partikel"
+  },
+  "أداة أشارة": {
+    "en": "demonstrative particle",
+    "fr": "particule démonstrative",
+    "de": "demonstrative Partikel"
+  },
+  "أداة ملكية مذكر": {
+    "en": "masculine possessive particle",
+    "fr": "particule possessive masculine",
+    "de": "maskuline Possessivpartikel"
+  },
+  "suffix لاحقة": {
+    "en": "suffix",
+    "fr": "suffixe",
+    "de": "Suffix"
+  },
+  "رقم مذكر": {
+    "en": "masculine numeral",
+    "fr": "numéral masculin",
+    "de": "maskuliner Numeral"
+  },
+  "اسم إشارة مذكر": {
+    "en": "masculine demonstrative noun",
+    "fr": "nom démonstratif masculin",
+    "de": "maskulines demonstratives Nomen"
+  },
+  "صفة جمع": {
+    "en": "adjective, plural",
+    "fr": "adjectif, pluriel",
+    "de": "Adjektiv, Plural"
+  },
+  "بادئة prefix": {
+    "en": "prefix",
+    "fr": "préfixe",
+    "de": "Präfix"
+  },
+  "صفة، يوناني": {
+    "en": "adjective, Greek",
+    "fr": "adjectif, grec",
+    "de": "Adjektiv, griechisch"
+  },
+  "أداة جمع": {
+    "en": "plural particle/marker",
+    "fr": "particule/marqueur du pluriel",
+    "de": "Pluralpartikel/Pluralmarker"
+  },
+  "أداة مقارنة": {
+    "en": "comparative particle",
+    "fr": "particule comparative",
+    "de": "Komparativpartikel"
+  },
+  "اسم، مؤنث ، صيغة للفعل يأتي بعدها المفعول مباشرة بدون أداة مفعول": {
+    "en": "noun, feminine; verb-derived form after which the object follows directly without an object marker",
+    "fr": "nom féminin ; forme dérivée du verbe après laquelle l'objet suit directement sans marqueur d'objet",
+    "de": "Nomen, feminin; vom Verb abgeleitete Form, nach der das Objekt direkt ohne Objektmarker folgt"
+  },
+  "زائدة prefix": {
+    "en": "augmentative prefix",
+    "fr": "préfixe augmentatif",
+    "de": "augmentatives Präfix"
+  },
+  "اسم، مؤنث صيغة للفعل يأتي بعدها المفعول مباشرة بدون أداة مفعول": {
+    "en": "noun, feminine; verb-derived form after which the object follows directly without an object marker",
+    "fr": "nom féminin ; forme dérivée du verbe après laquelle l'objet suit directement sans marqueur d'objet",
+    "de": "Nomen, feminin; vom Verb abgeleitete Form, nach der das Objekt direkt ohne Objektmarker folgt"
+  },
+  "صفة، صيغة مصدرية للفعل يأتي بعدها أداة المفعول ثم المفعول": {
+    "en": "adjective; infinitive/verbal-noun form of the verb followed by an object marker then the object",
+    "fr": "adjectif ; forme infinitive/nom verbal du verbe suivie d'un marqueur d'objet puis de l'objet",
+    "de": "Adjektiv; Infinitiv/Verbalnomen‑Form des Verbs, gefolgt von einem Objektmarker und dann dem Objekt"
+  },
+  "اسم جمع ومذكر": {
+    "en": "plural masculine noun",
+    "fr": "nom pluriel et masculin",
+    "de": "Plural maskulines Nomen"
+  },
+  "أداة مؤنث": {
+    "en": "feminine particle",
+    "fr": "particule féminine",
+    "de": "feminine Partikel"
+  },
+  "νϩν، νϧν": {
+    "en": "νϩν, νϧν forms",
+    "fr": "formes νϩν, νϧν",
+    "de": "Formen νϩν, νϧν"
+  }
+}

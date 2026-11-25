@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "coptic ⲭⲏⲙⲓ",
+    "slug": "coptic-dictionary",
+    "version": "1.3.1",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "coptic-dictionary",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-transparent.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#070202"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.khmi.copticdictionary",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "fetch"
+        ]
+      }
+    },
+    "android": {
+      "backgroundColor": "#8B0000",
+      "package": "com.khmi.copticdictionary",
+      "softwareKeyboardLayoutMode": "resize",
+      "versionCode": 25,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#8B0000"
+      },
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.VIBRATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WAKE_LOCK",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.USE_EXACT_ALARM"
+      ],
+      "googleServicesFile": "./google-services.json"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "64d3c225-d01b-4de7-b62d-a3cca1f465e8"
+      }
+    },
+    "owner": "ebramel-masry",
+    "experiments": {
+      "baseUrl": "/coptic-khmi-web"
+    }
+  }
+}
