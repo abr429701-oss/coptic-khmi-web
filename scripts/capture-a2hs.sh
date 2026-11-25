@@ -27,17 +27,24 @@ grep -q ADD_TAPPED capture/RESULT.txt || { echo "BLOCKED at install" | tee -a ca
 finish; REC=""
 cp capture/a2hs.mov capture/seg1-install.mov
 cp capture/RESULT.txt capture/RESULT-after-install.txt
-xcrun simctl io "$UDID" recordVideo --codec h264 capture/seg2-launch.mov &
+URLS="https://docs.google.com/spreadsheets/d/1vCsh_P_kP-6oP0XstXvGfBwO9_TndB3GjV1HcllG8QY/edit https://drive.google.com/ https://coptic-app-notifications.abraammerzik56.workers.dev/ https://abr429701-oss.github.io/coptic-khmi-web/ https://example.com/"
+netcheck() { for u in $URLS; do echo "$1 $(curl -s -o /dev/null -m 8 -w '%{http_code}' "$u") $u"; done | tee -a capture/net-checks.txt; }
+echo "scope: host-level curl to the app content hosts plus an in-simulator Safari load of example.com; simulator shares the Mac network" > capture/net-checks.txt
+xcrun simctl io "$UDID" recordVideo --codec h264 capture/seg2-online.mov &
 REC=$!
 sleep 3
+netcheck ONLINE_BASELINE
+python3 scripts/drive_a2hs.py "$UDID" baseline
 python3 scripts/drive_a2hs.py "$UDID" launch
-grep -q ICON_ON_HOME_SCREEN capture/RESULT.txt || { finish; exit 0; }
-sleep 60
 finish; REC=""
-sudo ifconfig en0 down || true
-sleep 4
+sleep 30
+for i in $(ifconfig -l); do case $i in en*) sudo ifconfig $i down;; esac; done
+sleep 6
+ifconfig -a | grep -E '^en|status' >> capture/net-checks.txt
 xcrun simctl io "$UDID" recordVideo --codec h264 capture/seg3-offline.mov &
 REC=$!
 sleep 3
+netcheck OFFLINE_AFTER_CUT
 python3 scripts/drive_a2hs.py "$UDID" offline
 finish
+for i in $(ifconfig -l); do case $i in en*) sudo ifconfig $i up;; esac; done

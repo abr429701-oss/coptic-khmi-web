@@ -126,45 +126,70 @@ def launch_icon(tag, press_home=False):
         time.sleep(4)
     if not ic: stop("web clip label (XHMI) not found on any SpringBoard page (see pixels)")
     open(f"{CAP}/RESULT.txt", "a").write("ICON_ON_HOME_SCREEN\n")
-    tap(ic[0], ic[1] - 45, wait=15)
-    p, lines = snap(tag + "-launched")
-    bar = has(lines, r"abr429701-oss\.github\.io")
-    open(f"{CAP}/RESULT.txt", "a").write(("LAUNCHED_BUT_SAFARI_BAR_TEXT_PRESENT\n" if bar else "LAUNCHED_NO_SAFARI_ADDRESS_BAR_TEXT\n"))
-    log("launched; classify", classify(lines), "bar_text", bar)
-def interact(tag):
-    """OCR-gated: tap search field / Bible tab if their labels are visible; log every OCR line. No repeat taps."""
-    p, lines = snap(tag + "-home")
-    log("OCR", tag, [l[2] for l in lines][:60])
-    if len(lines) < 4: stop("app content not visible (too little text)")
-    sf = find(lines, r"بحث|search|ابحث")
-    if sf:
-        tap(sf[0], sf[1], wait=4)
-        sh("idb ui text 'a' --udid %s" % UDID); time.sleep(5)
-        p, l2 = snap(tag + "-search-typed")
-        log("OCR search", [l[2] for l in l2][:60])
-        open(f"{CAP}/RESULT.txt", "a").write(tag.upper() + "_SEARCH_TAPPED_AND_TYPED\n")
-        go_home_keep = False
-    else:
-        log("no search label found", tag)
-    p, l3 = snap(tag + "-end")
-    bible = find(l3, r"الكتاب|المقدس|bible")
-    if bible:
-        tap(bible[0], bible[1], wait=6)
-        p, l4 = snap(tag + "-bible")
-        log("OCR bible", [l[2] for l in l4][:60])
-        open(f"{CAP}/RESULT.txt", "a").write(tag.upper() + "_BIBLE_TAPPED\n")
-    else:
-        log("no bible label found", tag)
+    for attempt in range(2):
+        tap(ic[0], ic[1] - 45, wait=15)
+        for k in range(8):
+            p, lines = snap(f"{tag}-launched{attempt}-{k}"); st = classify(lines)
+            log("launch observe", attempt, k, st)
+            if st != "springboard": break
+            time.sleep(4)
+        if st != "springboard": break
+        log("still SpringBoard 45s after tap; ONE retap (launch only)")
+    if st == "springboard": stop("icon tap did not leave SpringBoard after one retap")
+    if st != "app_page": stop(f"after launch state is {st}, not app content")
+    bar = has(lines, r"abr429701-oss\.github\.io|Reload|Safari")
+    open(f"{CAP}/RESULT.txt", "a").write(("LAUNCHED_BUT_SAFARI_TEXT_PRESENT\n" if bar else "LAUNCHED_APP_CONTENT_NO_SAFARI_TEXT\n"))
+    return lines
+
+def sig(lines): return set(t for _, _, t in lines)
+def changed(a, b):
+    A, B = sig(a), sig(b)
+    return len(A ^ B) > max(3, 0.25 * max(len(A | B), 1))
+def key_return():
+    subprocess.run(["idb", "ui", "key", "40", "--udid", UDID], capture_output=True); time.sleep(2)
+def feature_proof(tag, book_idx, chap_idx, query):
+    R = lambda m: open(f"{CAP}/RESULT.txt", "a").write(f"{tag.upper()}_{m}\n")
+    p, base = snap(tag + "-f0-base")
+    if classify(base) != "app_page": stop("app content not visible before feature taps")
+    tap(200, 327, wait=4)
+    subprocess.run(["idb", "ui", "text", query, "--udid", UDID], capture_output=True); time.sleep(8)
+    p, s1 = snap(tag + "-f1-search-typed")
+    log("OCR search", [t for _, _, t in s1][:60])
+    if changed(base, s1): R("SEARCH_SCREEN_CHANGED_CHECK_PIXELS")
+    else: R("SEARCH_NO_VISIBLE_CHANGE")
+    p, s1b = snap(tag + "-f1b-search-results")
+    key_return(); p, s1c = snap(tag + "-f1c-after-return")
+    tap(357, 323, wait=8)
+    p, s2 = snap(tag + "-f2-bible-button")
+    log("OCR bible", [t for _, _, t in s2][:60])
+    if not changed(s1c, s2): stop("Bible button tap produced no visible change")
+    R("BIBLE_SCREEN_OPENED")
+    cands = [l for l in s2 if 330 < l[1] < 850 and l[0] > 20 and l[2] not in sig(s1c) and len(l[2]) >= 2]
+    log("book candidates", cands[:12])
+    if len(cands) <= book_idx: stop("no book candidate lines")
+    b = cands[book_idx]; tap(b[0], b[1], wait=8)
+    p, s3 = snap(tag + "-f3-book"); log("OCR book", [t for _, _, t in s3][:60])
+    if not changed(s2, s3): stop("book tap produced no visible change")
+    R("BOOK_OPENED")
+    nums = [l for l in s3 if re.fullmatch(r"\d{1,3}", l[2]) and 330 < l[1] < 850]
+    log("chapter candidates", nums[:20])
+    if len(nums) <= chap_idx: stop("no chapter number candidates")
+    c = nums[chap_idx]; tap(c[0], c[1], wait=8)
+    p, s4 = snap(tag + "-f4-chapter"); log("OCR chapter", [t for _, _, t in s4][:80])
+    if not changed(s3, s4): stop("chapter tap produced no visible change")
+    R("CHAPTER_OPENED")
+    swipe_up(); snap(tag + "-f5-chapter-scrolled")
+
+if MODE == "baseline":
+    sh("xcrun simctl openurl %s https://example.com" % UDID); time.sleep(15)
+    snap("net-sim-safari-example"); go_home()
 if MODE == "launch":
-    launch_icon("launch")
-    r = open(f"{CAP}/RESULT.txt").read()
-    # true standalone check: content visible AND no Safari chrome words
-    p, lines = snap("launch-standalone")
-    chrome = has(lines, r"abr429701-oss|Safari|Reload|AA$")
-    open(f"{CAP}/RESULT.txt", "a").write("STANDALONE_CHROME_TEXT_PRESENT\n" if chrome else "STANDALONE_NO_CHROME_TEXT_CHECK_PIXELS\n")
-    interact("online")
+    lines = launch_icon("launch")
+    feature_proof("online", 0, 0, "love")
 if MODE == "offline":
     log("terminate", sh("xcrun simctl terminate %s com.apple.webapp 2>&1" % UDID))
-    launch_icon("offline", press_home=True)
-    time.sleep(8)
-    interact("offline")
+    sh("xcrun simctl openurl %s https://example.com" % UDID); time.sleep(15)
+    snap("net-sim-safari-example-offline")
+    lines = launch_icon("offline", press_home=True)
+    time.sleep(5)
+    feature_proof("offline", 3, 2, "water")
