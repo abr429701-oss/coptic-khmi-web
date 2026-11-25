@@ -10,8 +10,10 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 40
     steps:
-      - name: Checkout (probe script)
+      - name: Checkout (probe script, full history for exact staged SHA)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - name: Build staged 35f4531 and probe Learn iframe in real Safari
         run: bash scripts/capture-learn-probe.sh
