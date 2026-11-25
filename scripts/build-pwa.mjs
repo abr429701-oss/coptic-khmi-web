@@ -18,15 +18,18 @@ const walk = (dir, out = []) => {
 // 1) Precache list: app shell only (JS bundle, favicon, icons, manifest). Bible JSON is
 //    cached on demand at runtime so first setup stays fast.
 const shellFiles = walk(DIST)
-  .filter(f => /_expo[\/\\]static[\/\\]js[\/\\].*\.js$/.test(f) || /favicon\.ico$/.test(f))
+  .filter(f => /_expo[\/\\]static[\/\\]js[\/\\].*\.js$/.test(f) || /favicon\.ico$/.test(f) || /\.(ttf|otf)$/.test(f))
   .map(f => BASE + '/' + f.split(path.sep).join('/').replace(/^dist\//, ''));
-const precache = ['/', '/index.html', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png', ...shellFiles]
+const precache = ['/', '/index.html', '/manifest.json', '/offline-manifest.json', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png', ...shellFiles]
   .map(u => u === '/' ? BASE + '/' : (u.startsWith(BASE) ? u : BASE + u));
+// Offline manifest the in-app badge verifies against Cache Storage: "ready" only when
+// every shell, font and dictionary-carrying bundle is durably cached on the device.
+fs.writeFileSync(path.join(DIST, 'offline-manifest.json'), JSON.stringify({ version: 1, resources: precache }));
 
 const sw = `// Coptic Khmi web app service worker. App shell precached; Bible JSON and same-origin
 // GETs cached on demand. Cross-origin data (sheet sync, audio, videos) always goes to network.
-const VERSION = 'khmi-shell-v1';
-const RUNTIME = 'khmi-runtime-v1';
+const VERSION = 'khmi-shell-v2';
+const RUNTIME = 'khmi-runtime-v2';
 const PRECACHE = ${JSON.stringify(precache, null, 2)};
 
 self.addEventListener('install', (event) => {
@@ -81,6 +84,7 @@ fs.writeFileSync(path.join(DIST, 'sw.js'), sw);
 // 2) index.html: manifest, iOS web-app meta, icons, SW registration.
 let html = fs.readFileSync(path.join(DIST, 'index.html'), 'utf8');
 const headAdd = `
+  <script>window.__KHMI_BASE__ = '${BASE}';</script>
   <link rel="manifest" href="${BASE}/manifest.json" />
   <meta name="theme-color" content="#8B0000" />
   <meta name="mobile-web-app-capable" content="yes" />

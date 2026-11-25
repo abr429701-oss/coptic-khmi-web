@@ -44,6 +44,7 @@
     "@expo/metro-runtime": "~6.1.2",
     "@react-native-community/netinfo": "11.4.1",
     "@types/qrcode-generator": "^0.0.16",
+    "babel-plugin-react-compiler": "^19.0.0-beta-ebf51a3-20250411",
     "docx": "^9.16.0",
     "expo": "~54.0.33",
     "expo-application": "~7.0.8",

@@ -4,11 +4,37 @@ import { Feather } from "@expo/vector-icons";
 
 type BadgeState = "hidden" | "preparing" | "ready";
 
+const BASE = "/coptic-khmi-web/";
+
 /**
- * Web-only pill that tells the user when the app shell is saved on the device,
- * so closing and reopening the app works without internet (dictionary included,
- * since the bundled snapshot ships inside the saved shell).
+ * Web-only pill that tells the user when the app is durably saved on the device.
+ * "Ready" is shown only after the service worker controls the page AND every
+ * resource in offline-manifest.json (app shell, fonts, and the JS bundle that
+ * carries the dictionary snapshot) is present in Cache Storage - so closing and
+ * reopening the app genuinely works without internet. If the browser evicts
+ * cached data later, the badge drops back to "preparing" instead of lying.
  */
+async function verifyOfflineReady(): Promise<boolean> {
+  if (typeof navigator === "undefined" || !navigator.serviceWorker?.controller) return false;
+  if (typeof caches === "undefined") return false;
+  try {
+    const res = await caches.match(BASE + "offline-manifest.json");
+    if (!res) return false;
+    const manifest = await res.json();
+    const resources: string[] = manifest.resources || [];
+    const cachedPaths = new Set<string>();
+    for (const name of await caches.keys()) {
+      const cache = await caches.open(name);
+      for (const req of await cache.keys()) {
+        cachedPaths.add(new URL(req.url).pathname);
+      }
+    }
+    return resources.every((r) => cachedPaths.has(r));
+  } catch {
+    return false;
+  }
+}
+
 export default function OfflineReadyBadge() {
   const [state, setState] = useState<BadgeState>("hidden");
 
@@ -17,17 +43,23 @@ export default function OfflineReadyBadge() {
       return;
     }
     let cancelled = false;
-    const update = () => {
-      if (cancelled) return;
-      setState(navigator.serviceWorker.controller ? "ready" : "preparing");
+    const update = async () => {
+      const ok = await verifyOfflineReady();
+      if (!cancelled) setState(ok ? "ready" : "preparing");
     };
     update();
     navigator.serviceWorker.addEventListener("controllerchange", update);
     navigator.serviceWorker.ready.then(update).catch(() => undefined);
-    const t = setTimeout(update, 4000);
+    // Precache fills asynchronously after install; poll until ready, then keep a
+    // slower heartbeat so cache eviction is reflected honestly.
+    const fast = setInterval(update, 2000);
+    const slow = setInterval(update, 30000);
+    const stopFast = setTimeout(() => clearInterval(fast), 60000);
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      clearInterval(fast);
+      clearInterval(slow);
+      clearTimeout(stopFast);
       navigator.serviceWorker.removeEventListener("controllerchange", update);
     };
   }, []);
