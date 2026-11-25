@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Real iOS Simulator capture v3: Safari opens the LIVE PWA; AX-driven interactions via idb (venv install).
+# Real iOS Simulator capture v4: correct search-bar coordinates; A2HS via Safari "..." page menu (native UI, AX-visible).
 set -x
 mkdir -p capture
 URL="${LIVE_URL:-https://abr429701-oss.github.io/coptic-khmi-web/}"
@@ -24,7 +24,7 @@ xcrun simctl openurl "$UDID" "$URL"
 sleep 30
 xcrun simctl io "$UDID" screenshot capture/01-home-online.png
 
-# Dismiss Safari's first-run onboarding popup if present (Close X)
+# Dismiss Safari's first-run onboarding popup if present
 python3 /tmp/tap_ax.py "$UDID" label '^(Close|إغلاق)$' || python3 /tmp/tap_ax.py "$UDID" frac 0.90,0.75 || true
 sleep 2
 
@@ -32,13 +32,16 @@ xcrun simctl io "$UDID" recordVideo --codec h264 capture/demo.mov &
 REC=$!
 sleep 2
 
-# Search flow: tap search field by placeholder label, type, open first result
-python3 /tmp/tap_ax.py "$UDID" label 'search|بحث' || python3 /tmp/tap_ax.py "$UDID" frac 0.55,0.23 || true
+# Search flow: tap the app's search field (web content is invisible to idb AX; use measured fraction)
+python3 /tmp/tap_ax.py "$UDID" frac 0.5,0.335 || true
 sleep 3
 idb ui text "love" --udid "$UDID" || true
 sleep 8
 xcrun simctl io "$UDID" screenshot capture/02-search.png
-python3 /tmp/tap_ax.py "$UDID" frac 0.5,0.5 || true
+# Dismiss keyboard if it covers results, then open first result
+idb ui key 12 --udid "$UDID" || true   # hide keyboard (best effort)
+sleep 2
+python3 /tmp/tap_ax.py "$UDID" frac 0.5,0.52 || true
 sleep 8
 xcrun simctl io "$UDID" screenshot capture/03-details.png
 idb ui button HOME --udid "$UDID" || true
@@ -46,14 +49,17 @@ sleep 2
 xcrun simctl openurl "$UDID" "$URL"
 sleep 8
 
-# Add to Home Screen via real Safari share sheet (best effort, AX-driven)
-python3 /tmp/tap_ax.py "$UDID" label '^(Share|مشاركة)$' || python3 /tmp/tap_ax.py "$UDID" frac 0.5,0.96 || true
+# Add to Home Screen via the real Safari "..." page menu (native UI, so AX works here)
+python3 /tmp/tap_ax.py "$UDID" frac 0.945,0.955 || true
 sleep 4
-xcrun simctl io "$UDID" screenshot capture/05-sharesheet.png
-python3 /tmp/tap_ax.py "$UDID" label 'Add to Home|إضافة إلى الشاشة' || python3 /tmp/tap_ax.py "$UDID" frac 0.5,0.78 || true
+xcrun simctl io "$UDID" screenshot capture/05-pagemenu.png
+python3 /tmp/tap_ax.py "$UDID" label '^Share' || true
 sleep 4
-xcrun simctl io "$UDID" screenshot capture/06-a2hs-sheet.png
-python3 /tmp/tap_ax.py "$UDID" label '^(Add|إضافة)$' || python3 /tmp/tap_ax.py "$UDID" frac 0.9,0.08 || true
+xcrun simctl io "$UDID" screenshot capture/06-sharesheet.png
+python3 /tmp/tap_ax.py "$UDID" label 'Add to Home Screen' || true
+sleep 4
+xcrun simctl io "$UDID" screenshot capture/07-a2hs-confirm.png
+python3 /tmp/tap_ax.py "$UDID" label '^Add$' || true
 sleep 4
 idb ui button HOME --udid "$UDID" || true
 sleep 3

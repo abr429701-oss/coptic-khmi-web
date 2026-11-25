@@ -5,11 +5,14 @@ import json, re, subprocess, sys
 udid, mode, arg = sys.argv[1], sys.argv[2], sys.argv[3]
 
 def dump():
-    out = subprocess.run(["idb", "ui", "describe-all", "--udid", udid], capture_output=True, text=True).stdout
-    try:
-        return json.loads(out)
-    except Exception:
-        return None
+    import time
+    for _ in range(3):
+        out = subprocess.run(["idb", "ui", "describe-all", "--udid", udid], capture_output=True, text=True).stdout
+        try:
+            return json.loads(out)
+        except Exception:
+            time.sleep(2)
+    return None
 
 def tap(x, y):
     print(f"tap {x} {y}")
