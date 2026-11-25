@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Platform } from "react-native";
+import { DeviceEventEmitter, Platform } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";
 import type { DictionaryEntry } from "./useDictionary";
 import { INTERNAL_AUDIO_DIR } from "@/contexts/StorageContext";
@@ -82,12 +82,14 @@ export async function saveEntries(entries: DictionaryEntry[]): Promise<void> {
     try {
       await FileSystem.writeAsStringAsync(filePath, json);
       await AsyncStorage.removeItem(KEYS.ENTRIES).catch(() => undefined);
+      DeviceEventEmitter.emit("khmi_entries_saved");
       return;
     } catch {
       // AsyncStorage is the fallback if the device file cannot be written.
     }
   }
   await AsyncStorage.setItem(KEYS.ENTRIES, json);
+  DeviceEventEmitter.emit("khmi_entries_saved");
 }
 
 export async function clearEntries(): Promise<void> {

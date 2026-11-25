@@ -104,6 +104,14 @@ async function getCurrentTokenFromStorage(): Promise<string | null> {
 /* ------------------------------------------------------------
  * 0️⃣ وظيفة المزامنة الأساسية (تعمل في المقدمة والخلفية)
  * ------------------------------------------------------------ */
+// NetInfo's browser implementation always reports isInternetReachable: null
+// (no reachability probe exists on web), so a strict isInternetReachable gate
+// treats every web/Electron session as offline and blocks device registration
+// forever. On web, isConnected (navigator.onLine) is the only available signal;
+// native platforms keep the original strict reachability check.
+const isNetOnline = (s: { isConnected: boolean | null; isInternetReachable: boolean | null }): boolean =>
+  Platform.OS === 'web' ? s.isConnected !== false : !!s.isConnected && !!s.isInternetReachable;
+
 export async function syncDeviceTokenWithSheet(forceResync: boolean = false) {
   // المحاكيات غالباً ما تفشل في جلب التوكن، لكننا سنحاول على أي حال للأجهزة اللوحية
   const isPhysical = Device.isDevice;
@@ -330,7 +338,7 @@ export function useExpoPushNotifications(splashDone: boolean = true) {
 
       // التحقق من الاتصال بالإنترنت أولاً
       const netInfo = await NetInfo.fetch();
-      if (!netInfo.isConnected || !netInfo.isInternetReachable) {
+      if (!isNetOnline(netInfo)) {
         console.log('📱 No internet connection, will retry when online...');
         isRegistering.current = false;
 
@@ -341,7 +349,7 @@ export function useExpoPushNotifications(splashDone: boolean = true) {
 
         networkRetryInterval.current = setInterval(async () => {
           const currentNetInfo = await NetInfo.fetch();
-          if (currentNetInfo.isConnected && currentNetInfo.isInternetReachable) {
+          if (isNetOnline(currentNetInfo)) {
             console.log('🌐 Internet restored, retrying registration...');
             if (networkRetryInterval.current) {
               clearInterval(networkRetryInterval.current);
@@ -387,7 +395,7 @@ export function useExpoPushNotifications(splashDone: boolean = true) {
   const verifyAndReRegister = useCallback(async () => {
     try {
       const netInfo = await NetInfo.fetch();
-      if (!netInfo.isConnected || !netInfo.isInternetReachable) {
+      if (!isNetOnline(netInfo)) {
         console.log('📱 No internet, skipping verification');
         return;
       }
@@ -592,7 +600,7 @@ export function useExpoPushNotifications(splashDone: boolean = true) {
 
     // 2️⃣ مراقبة الاتصال بالإنترنت لإعادة المحاولة فوراً إذا عاد النت
     const unsubscribeNetInfo = NetInfo.addEventListener((state) => {
-      if (state.isConnected && state.isInternetReachable) {
+      if (isNetOnline(state)) {
         console.log('🌐 Internet connection detected, triggering radical sync...');
         // عند عودة النت، نجبر النظام على المزامنة فوراً دون تأخير
         registerForPushNotificationsAsync(true);
