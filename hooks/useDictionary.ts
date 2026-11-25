@@ -126,7 +126,10 @@ function parseDictionaryRowsChunk(
     const audioUrl = normalizeAudioUrl(value(8));
     const gender = value(9);
 
-    const identity = `${coptic}\u0000${arabic}\u0000${audioUrl ?? ""}`;
+    // Identity uses only the headword text. Mutable metadata (audioUrl and
+    // other admin-editable fields) must not re-id an entry: that orphans saved
+    // favorites/history when an admin edits a cell.
+    const identity = `${coptic}\u0000${arabic}`;
     const occurrence = occurrences.get(identity) ?? 0;
     occurrences.set(identity, occurrence + 1);
 
@@ -344,6 +347,23 @@ export async function fetchDictionaryData(source?: DictionarySourceConfig, minim
 export async function previewDictionarySource(source: DictionarySourceConfig): Promise<{ entryCount: number; sample: DictionaryEntry[] }> {
   const entries = await fetchDictionaryData(source, 1);
   return { entryCount: entries.length, sample: entries.slice(0, 5) };
+}
+
+/**
+ * يبني خريطة من المعرّف القديم (الذي كان يتضمّن رابط الصوت) إلى المعرّف الحالي،
+ * حتى تستمر المفضلة والسجل المحفوظان قبل هذا التغيير دون حذف أو ترحيل.
+ */
+export function buildLegacyIdAliasMap(entries: DictionaryEntry[]): Map<string, string> {
+  const occurrences = new Map<string, number>();
+  const alias = new Map<string, string>();
+  for (const entry of entries) {
+    const legacyIdentity = `${entry.coptic}\u0000${entry.arabic}\u0000${entry.audioUrl ?? ""}`;
+    const occurrence = occurrences.get(legacyIdentity) ?? 0;
+    occurrences.set(legacyIdentity, occurrence + 1);
+    const legacyId = `dictionary-${hashId(`${legacyIdentity}\u0000${occurrence}`)}`;
+    if (legacyId !== entry.id) alias.set(legacyId, entry.id);
+  }
+  return alias;
 }
 
 export function useDictionary() {

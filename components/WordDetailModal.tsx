@@ -450,7 +450,7 @@ export function WordDetailModal({
   const handleFav = async () => {
     try { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch { }
     if (activeEntry) {
-      await toggleFavorite(activeEntry.id, entryLang, (activeEntry as any)?._query || searchTerm);
+      await toggleFavorite(activeEntry.id, entryLang, (activeEntry as any)?._query || searchTerm, activeEntry.coptic, activeEntry.arabic);
       logActivity("favorite", entry);
     }
   };

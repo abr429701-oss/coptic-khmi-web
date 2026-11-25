@@ -73,6 +73,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { HistoryProvider } from "@/contexts/HistoryContext";
+import { useSavedRecordReconcile } from "@/hooks/useSavedRecordReconcile";
 import { SplashProvider, useSplash } from "@/contexts/SplashContext";
 import { SplashAnimation } from "@/components/SplashAnimation";
 import { StorageProvider } from "@/contexts/StorageContext";
@@ -265,6 +266,7 @@ function RootLayoutNav() {
 }
 
 function AppContent() {
+  useSavedRecordReconcile();
   const { isAdminMode, isLoaded: isAdminLoaded } = useAdmin();
   const { config, remoteSettings } = useAppConfig();
   const updateAdminOnly = remoteSettings.content.appUpdateAdminOnly === "true";

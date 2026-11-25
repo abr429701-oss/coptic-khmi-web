@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { DictionaryEntry } from "@/hooks/useDictionary";
+import { reconcileSavedIds, type ReconcileEntry } from "@/lib/savedRecordReconcile";
 
 const HISTORY_KEY = "@coptic/history_v3";
 const MAX_HISTORY = 100;
@@ -12,6 +13,7 @@ interface HistoryContextValue {
   addToHistory: (entry: HistoryItem) => void;
   clearHistory: () => void;
   removeDeletedIds: (ids: string[]) => void;
+  reconcile: (entries: ReconcileEntry[], legacyAlias: Map<string, string>) => void;
 }
 
 const HistoryContext = createContext<HistoryContextValue>({
@@ -19,6 +21,7 @@ const HistoryContext = createContext<HistoryContextValue>({
   addToHistory: () => {},
   clearHistory: () => {},
   removeDeletedIds: () => {},
+  reconcile: () => {},
 });
 
 export function HistoryProvider({ children }: { children: React.ReactNode }) {
@@ -67,8 +70,19 @@ export function HistoryProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // يعيد ربط المعرّفات المحفوظة بعد إعادة تحميل القاموس دون حذف أي سجل.
+  const reconcile = useCallback((entries: ReconcileEntry[], legacyAlias: Map<string, string>) => {
+    setHistory((prev) => {
+      const { next, changed } = reconcileSavedIds(prev, entries, legacyAlias);
+      if (changed) {
+        AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(next)).catch(() => {});
+      }
+      return next;
+    });
+  }, []);
+
   return (
-    <HistoryContext.Provider value={{ history, addToHistory, clearHistory, removeDeletedIds }}>
+    <HistoryContext.Provider value={{ history, addToHistory, clearHistory, removeDeletedIds, reconcile }}>
       {children}
     </HistoryContext.Provider>
   );
