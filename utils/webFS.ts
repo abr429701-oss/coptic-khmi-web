@@ -11,8 +11,20 @@ export async function copyAsync({ from, to }: { from: string; to: string }) { co
 export async function moveAsync({ from, to }: { from: string; to: string }) { const f = store.get(from); if (f) { store.set(to, { ...f }); store.delete(from); } }
 export async function readAsStringAsync(uri: string, o?: { encoding?: string }) {
   const f = store.get(uri);
-  if (!f) throw new Error("file not found: " + uriToName(uri));
-  return f.data;
+  if (f) return f.data;
+  // Web assets (bundled images etc.) are URLs: fetch and convert.
+  const r = await fetch(uri);
+  if (!r.ok) throw new Error("file not found: " + uriToName(uri));
+  if ((o?.encoding || "utf8") === EncodingType.Base64 || o?.encoding === "base64") {
+    const blob = await r.blob();
+    return new Promise<string>((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result).split(",")[1] || "");
+      fr.onerror = reject;
+      fr.readAsDataURL(blob);
+    });
+  }
+  return r.text();
 }
 export async function writeAsStringAsync(uri: string, content: string, o?: { encoding?: string }) {
   store.set(uri, { data: content, encoding: o?.encoding || "utf8" });
