@@ -70,12 +70,29 @@ shot 08-search.png
 tap 220 458 6                 # first result row
 shot 09-details.png
 
+# ---- Chime gesture path: fresh reload, first-user-gesture tap (no audio claim; mechanism is code-level) ----
+xcrun simctl openurl "$UDID" "$URL"
+sleep 6
+shot 10-resplash.png
+tap 220 500 3                 # first user gesture (triggers deferred chime per f4496a5)
+shot 11-after-gesture.png
+
 # ---- Offline: network cut, reload; app must render from SW cache ----
 sudo ifconfig en0 down || true
 sleep 4
 xcrun simctl openurl "$UDID" "$URL"
 sleep 15
-shot 10-offline.png
+shot 12-offline.png
+
+# ---- Offline UNOPENED Bible navigation (fresh sim: any chapter is unopened) ----
+tap 396 103 4                 # hamburger (px 655,170)
+shot 13-drawer.png
+tap 260 250 5                 # 3rd drawer row = الكتاب المقدس (home/learn/bible order from DrawerMenu.tsx)
+shot 14-bible.png
+tap 220 250 5                 # first book entry (guess; screenshot verifies state)
+shot 15-book.png
+tap 80 220 5                  # chapter 1 cell (guess; screenshot verifies)
+shot 16-chapter.png
 sudo ifconfig en0 up || true
 sleep 8
 curl -sS -o /dev/null -w 'network restored: %{http_code}\n' https://api.github.com/zen || sudo ifconfig en0 up || true
