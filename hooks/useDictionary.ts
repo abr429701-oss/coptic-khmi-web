@@ -354,10 +354,19 @@ export async function previewDictionarySource(source: DictionarySourceConfig): P
  * حتى تستمر المفضلة والسجل المحفوظان قبل هذا التغيير دون حذف أو ترحيل.
  */
 export function buildLegacyIdAliasMap(entries: DictionaryEntry[]): Map<string, string> {
+  // Duplicate headwords make occurrence ordering ambiguous: adopting an alias
+  // could point a saved record at the wrong duplicate. Skip those entirely.
+  const headwordCounts = new Map<string, number>();
+  for (const entry of entries) {
+    const key = `${entry.coptic}\u0000${entry.arabic}`;
+    headwordCounts.set(key, (headwordCounts.get(key) ?? 0) + 1);
+  }
   const occurrences = new Map<string, number>();
   const alias = new Map<string, string>();
   for (const entry of entries) {
-    const legacyIdentity = `${entry.coptic}\u0000${entry.arabic}\u0000${entry.audioUrl ?? ""}`;
+    const headword = `${entry.coptic}\u0000${entry.arabic}`;
+    if ((headwordCounts.get(headword) ?? 0) > 1) continue;
+    const legacyIdentity = `${headword}\u0000${entry.audioUrl ?? ""}`;
     const occurrence = occurrences.get(legacyIdentity) ?? 0;
     occurrences.set(legacyIdentity, occurrence + 1);
     const legacyId = `dictionary-${hashId(`${legacyIdentity}\u0000${occurrence}`)}`;

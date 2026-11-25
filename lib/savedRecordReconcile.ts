@@ -19,10 +19,18 @@ export function reconcileSavedIds<T extends SavedIdRecord>(
   legacyAlias: Map<string, string>
 ): { next: T[]; changed: boolean } {
   const current = new Set(entries.map((e) => e.id));
-  const byHeadword = new Map<string, string>();
+  // A headword shared by multiple entries is ambiguous: null marks "do not
+  // re-match" so a saved record is never pointed at the wrong duplicate.
+  const byHeadword = new Map<string, string | null>();
+  const addHeadword = (text: string | undefined, id: string) => {
+    if (!text) return;
+    const seen = byHeadword.get(text);
+    if (seen === undefined) byHeadword.set(text, id);
+    else if (seen !== id) byHeadword.set(text, null);
+  };
   for (const e of entries) {
-    if (e.coptic && !byHeadword.has(e.coptic)) byHeadword.set(e.coptic, e.id);
-    if (e.arabic && !byHeadword.has(e.arabic)) byHeadword.set(e.arabic, e.id);
+    addHeadword(e.coptic, e.id);
+    addHeadword(e.arabic, e.id);
   }
   let changed = false;
   const next = records.map((rec) => {
@@ -37,7 +45,7 @@ export function reconcileSavedIds<T extends SavedIdRecord>(
     for (const text of [rec.coptic, rec.arabic]) {
       if (!text) continue;
       const hit = byHeadword.get(text);
-      if (hit) {
+      if (hit != null && hit !== "") {
         changed = true;
         return { ...rec, id: hit };
       }

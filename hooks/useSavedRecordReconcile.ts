@@ -17,5 +17,8 @@ export function useSavedRecordReconcile() {
     const alias = buildLegacyIdAliasMap(entries);
     reconcileFavorites(entries, alias);
     reconcileHistory(entries, alias);
+    // Electron only: dictionary data rendered = user-visible healthy build.
+    const bridge = (globalThis as { khmiUpdate?: { confirmHealthy?: () => void } }).khmiUpdate;
+    bridge?.confirmHealthy?.();
   }, [entries, reconcileFavorites, reconcileHistory]);
 }
