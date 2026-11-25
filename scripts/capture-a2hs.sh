@@ -89,13 +89,25 @@ echo "menu detected" | tee -a capture/RESULT.txt
 # ---- Gate 3: Share -> expand -> Add to Home Screen -> Add (coordinates read from run-4 screenshots; OCR dropped) ----
 tap 289 624 3
 shot 04-sharesheet.png
-idb ui swipe 220 820 220 360 --udid "$UDID" || true
-sleep 3
-shot 05-sheet-expanded.png
+# expand sheet: retry swipe until screenshot changes (flaky); verify by md5
+H0=$(md5 -q capture/04-sharesheet.png)
+for i in 1 2 3 4 5; do
+  idb ui swipe 220 800 220 300 --duration 0.4 --udid "$UDID" || true
+  sleep 3
+  shot "05-expand-try$i.png"
+  H1=$(md5 -q "capture/05-expand-try$i.png")
+  [ "$H1" != "$H0" ] && break
+done
+cp "capture/05-expand-try$i.png" capture/05-sheet-expanded.png
 axd 05-ax-expanded.txt
-tap 220 655 4                    # "Add to Home Screen" row (pt), read from 05 screenshot
-shot 06-a2hs-confirm.png
-axd 06-ax-confirm.txt
+# row tap, retry until the confirm sheet (AX frame 0,92 440x54) is seen
+for i in 1 2 3; do
+  tap 220 655 4
+  shot "06-a2hs-confirm-try$i.png"
+  axd 06-ax-confirm.txt
+  grep -q '0,92 440x54' capture/06-ax-confirm.txt && break
+done
+grep -q '0,92 440x54' capture/06-ax-confirm.txt || BLOCK "A2HS confirm sheet not reached (see 05/06)"
 sleep 6
 shot 06b-a2hs-confirm-loaded.png
 ADD="388 113"
