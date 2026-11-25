@@ -84,7 +84,7 @@ idb ui tap 378 894 --duration 0.15 --udid "$UDID"
 sleep 3
 shot 03-menu.png
 axd 03-ax-menu.txt
-grep -q '250x956' capture/03-ax-menu.txt || BLOCK "Safari page menu not detected by AX frames (see 03-menu.png)"
+grep -q ',593 .*x956' capture/03-ax-menu.txt || BLOCK "Safari page menu not detected by AX frames (see 03-menu.png)"
 echo "menu detected" | tee -a capture/RESULT.txt
 # ---- Gate 3: Share -> expand -> Add to Home Screen -> Add (coordinates read from run-4 screenshots; OCR dropped) ----
 tap 289 624 3
