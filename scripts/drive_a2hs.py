@@ -39,16 +39,16 @@ def has(lines, pat): return find(lines, pat) is not None
 def classify(lines):
     T = " | ".join(t for _, _, t in lines)
     if has(lines, r"abr429701.*github|Dictionary") and has(lines, r"\d:\d\d") and False: pass
-    if has(lines, r"personalized|Speed up your typing") and has(lines, r"^Continue$"): return "continue_modal"
+    if has(lines, r"personalized|Speed up your typing") and has(lines, r"Continue$"): return "continue_modal"
     if has(lines, r"Open as Web App"): return "a2hs_confirm"
-    if has(lines, r"Add to Home Screen") and has(lines, r"^Add$") and not has(lines, r"Edit Actions"): return "a2hs_confirm"
+    if has(lines, r"Add to Home Screen") and has(lines, r"(^|\s)Add$") and not has(lines, r"Edit Actions"): return "a2hs_confirm"
     if has(lines, r"Edit Actions") and has(lines, r"Add to Home Screen"): return "share_expanded"
-    if has(lines, r"^View More$") and has(lines, r"^Copy$"): return "share_collapsed"
-    if has(lines, r"Add to Bookmarks") and has(lines, r"^Share$") and has(lines, r"New Private Tab|All Tabs"): return "menu_open"
+    if has(lines, r"View More$") and has(lines, r"Copy$"): return "share_collapsed"
+    if has(lines, r"Add to Bookmarks") and has(lines, r"(^|\s)Share$") and has(lines, r"New Private Tab|All Tabs"): return "menu_open"
     if has(lines, r"View Bookmarks|Share Menu, and Open"): return "coachmark"
     if has(lines, r"Quickly Access All Tabs|^Private$") and has(lines, r"Tab"): return "tab_overview"
     if has(lines, r"Search or enter website|qwertyuiop") : return "keyboard_url"
-    if has(lines, r"^Photos$") and has(lines, r"^Settings$"): return "springboard"
+    if has(lines, r"Photos") and has(lines, r"Settings"): return "springboard"
     if has(lines, r"abr429701-oss\.github\.io"): return "safari_page"
     if has(lines, r"Coptic Dictionary|القاموس|جاهزة|خمي|ⲭⲏⲙⲓ"): return "app_page"
     return "unknown"
@@ -66,7 +66,7 @@ if MODE == "warmup":
     for i in range(14):
         st, lines, p = settle_state("warm")
         if st == "coachmark": tap(400, 707)
-        elif st == "continue_modal": tap(*find(lines, r"^Continue$")[:2])
+        elif st == "continue_modal": tap(*find(lines, r"Continue$")[:2])
         elif st in ("keyboard_url", "tab_overview"): stop(f"warmup unexpected {st}")
         elif st in ("safari_page", "app_page"):
             clean += 1
@@ -79,13 +79,13 @@ if MODE == "install":
         st, lines, p = settle_state("inst")
         if st in ("safari_page", "app_page"):
             tap(378, 894)                       # "..." page menu
-        elif st == "menu_open": tap(*find(lines, r"^Share$")[:2], wait=4)
+        elif st == "menu_open": tap(*find(lines, r"(^|\s)Share$")[:2], wait=4)
         elif st == "share_collapsed": swipe_up()
         elif st == "share_expanded": tap(*find(lines, r"Add to Home Screen")[:2], wait=7)
-        elif st == "continue_modal": tap(*find(lines, r"^Continue$")[:2])
+        elif st == "continue_modal": tap(*find(lines, r"Continue$")[:2])
         elif st == "coachmark": tap(400, 707)
         elif st == "a2hs_confirm":
-            a = find(lines, r"^Add$")
+            a = find(lines, r"(^|\s)Add$")
             if not a: time.sleep(3); continue    # still loading
             time.sleep(3)
             tap(a[0], a[1], wait=6)
