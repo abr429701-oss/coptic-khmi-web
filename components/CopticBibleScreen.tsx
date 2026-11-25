@@ -223,7 +223,24 @@ function createBibleXlsx(
       }
       return `<c r="${reference}" s="${styleId}" t="inlineStr"><is><t xml:space="preserve">${escapeXmlText(value)}</t></is></c>`;
     }).join("");
-    const rowHeight = rowIndex < 3 ? ` ht="${rowIndex === 0 ? (titleImageBytes ? 52 : 28) : rowIndex === 2 ? 28 : 24}" customHeight="1"` : "";
+    // Data rows: wrapped text needs an explicit height or spreadsheet apps render clipped/overlapping lines.
+    let dataRowHeight = "";
+    if (rowIndex >= 3) {
+      let estimatedLines = 1;
+      row.forEach((value, columnIndex) => {
+        if (columnIndex < 3) return;
+        const text = String(value ?? "");
+        if (!text) return;
+        // Column width is 44 character units; Arabic/Coptic glyphs are wider than Latin, so they fit fewer per line.
+        const hasWideScript = /[\u0600-\u06FF\u2C80-\u2CFF\u0590-\u05FF]/.test(text);
+        const capacity = hasWideScript ? 32 : 42;
+        const lines = Math.ceil(text.length / capacity);
+        if (lines > estimatedLines) estimatedLines = lines;
+      });
+      const ht = Math.min(409, Math.max(22, estimatedLines * 15 + 5));
+      dataRowHeight = ` ht="${ht}" customHeight="1"`;
+    }
+    const rowHeight = rowIndex < 3 ? ` ht="${rowIndex === 0 ? (titleImageBytes ? 52 : 28) : rowIndex === 2 ? 28 : 24}" customHeight="1"` : dataRowHeight;
     return `<row r="${rowIndex + 1}"${rowHeight}>${cells}</row>`;
   }).join("");
 
