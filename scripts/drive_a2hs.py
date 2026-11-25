@@ -94,8 +94,16 @@ if MODE == "install":
             a = find(lines, r"(^|\s)Add$")
             if not a or not has(lines, r"Open as Web App"):
                 time.sleep(5); last = None; continue          # still loading: observe, no tap
-            tap(a[0], a[1], wait=6)
-            p, lines = snap("after-add"); log("after add", classify(lines))
+            time.sleep(8)
+            p, l2 = snap("add-stable-check")
+            a2 = find(l2, r"(^|\s)Add$")
+            if classify(l2) != "a2hs_confirm" or not a2 or not (95 <= a2[1] <= 140 and a2[0] > 340):
+                log("Add sheet not settled (animation); no tap", a2); last = None; continue
+            tap(a2[0], a2[1], wait=6)
+            for k in range(8):
+                p, lines = snap("after-add%d" % k); st3 = classify(lines); log("after add", k, st3)
+                if st3 == "springboard": break
+                time.sleep(5)
             open(f"{CAP}/RESULT.txt", "a").write("ADD_TAPPED\n"); break
         if st not in ACTIONS: stop(f"install state {st} (no action defined)")
         t0 = time.time()
