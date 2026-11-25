@@ -86,62 +86,68 @@ shot 03-menu.png
 axd 03-ax-menu.txt
 grep -q '250x956' capture/03-ax-menu.txt || BLOCK "Safari page menu not detected by AX frames (see 03-menu.png)"
 echo "menu detected" | tee -a capture/RESULT.txt
-# ---- Gate 3 ----
-SX=$(ocr '^Share$') && tap ${SX% *} ${SX#* } 3 || tap 289 624 3
+# ---- Gate 3: Share -> expand -> Add to Home Screen -> Add (coordinates read from run-4 screenshots; OCR dropped) ----
+tap 289 624 3
 shot 04-sharesheet.png
-axd 04-ax-sheet.txt
-cp /tmp/ocr-err.txt capture/ocr-err0.txt 2>/dev/null
-xcrun simctl io "$UDID" screenshot /tmp/t.png; /tmp/idbenv/bin/python /tmp/ocr.py /tmp/t.png 440 "Share|Copy|Add" > capture/ocr-test.txt 2>&1; ls -la /tmp/ocr-out* >> capture/ocr-test.txt 2>&1; tesseract --version >> capture/ocr-test.txt 2>&1
-for y in 1 2 3; do idb ui swipe 220 820 220 360 --udid "$UDID" || true; sleep 2; shot "04x-scroll$y.png"; axd "04x-ax$y.txt"; done
-for s in 1 2 3 4; do
-  if ocr 'Add to Home' >/dev/null; then break; fi
-  idb ui swipe 220 800 220 400 --udid "$UDID" || true
-  sleep 2
-done
-shot 05-sheet-scrolled.png
-AX=$(ocr 'Add to Home') || BLOCK "Add to Home Screen not found by OCR in share sheet (see 04/05)"
-tap ${AX% *} ${AX#* } 4
+idb ui swipe 220 820 220 360 --udid "$UDID" || true
+sleep 3
+shot 05-sheet-expanded.png
+axd 05-ax-expanded.txt
+tap 220 655 4                    # "Add to Home Screen" row (pt), read from 05 screenshot
 shot 06-a2hs-confirm.png
-AD=$(ocr '^Add$') || BLOCK "Add button not found by OCR on confirm sheet (see 06)"
-tap ${AD% *} ${AD#* } 4
+axd 06-ax-confirm.txt
+# Add button: rightmost small frame in the top 300pt of the confirm sheet
+ADD=$(python3 - <<'PYX'
+import re
+best=None
+for l in open('capture/06-ax-confirm.txt'):
+    m=re.search(r'@ ([\d.]+),([\d.]+) ([\d.]+)x([\d.]+)',l)
+    if not m: continue
+    x,y,w,h=map(float,m.groups())
+    if y<300 and h<90 and w<200 and w>20:
+        c=(x+w/2,y+h/2)
+        if best is None or c[0]>best[0]: best=c
+print(int(best[0]),int(best[1])) if best else None
+PYX
+)
+echo "ADD candidate: $ADD" | tee -a capture/RESULT.txt
+[ -n "$ADD" ] && [ "$ADD" != None ] || BLOCK "no Add button candidate in confirm AX frames (see 06)"
+tap ${ADD% *} ${ADD#* } 4
 shot 07-after-add.png
-echo "A2HS_ADDED" | tee -a capture/RESULT.txt
+echo "A2HS_ADD_TAPPED" | tee -a capture/RESULT.txt
 
-# ---- Gate 4: icon on Home Screen, standalone launch ----
+# ---- Gate 4: Home Screen icon, standalone launch ----
 idb ui button HOME --udid "$UDID" || true
 sleep 3
 shot 08-homescreen.png
-IC=$(ocr 'coptic') || BLOCK "web-clip icon label not found by OCR on Home Screen (see 08)"
-echo "icon at $IC" | tee -a capture/RESULT.txt
-tap ${IC% *} $(( ${IC#* } - 40 )) 15       # tap icon image just above its label
+axd 08-ax-springboard.txt
+xcrun simctl listapps "$UDID" > capture/09-listapps.txt 2>&1 || true
+WC=$(grep -B2 -A12 -iE 'coptic|WebClip' capture/09-listapps.txt | grep -oE 'com\.apple\.webapp[A-Za-z0-9._-]*|[A-Za-z0-9._-]*webclip[A-Za-z0-9._-]*' | head -1)
+echo "webclip bundle: $WC" | tee -a capture/RESULT.txt
+[ -n "$WC" ] || BLOCK "no web clip app listed after Add (see 07/08/09)"
+xcrun simctl launch "$UDID" "$WC" | tee -a capture/RESULT.txt
+sleep 20
 shot 10-standalone.png
 axd 10-ax-standalone.txt
-# standalone check: Safari bottom bar frames (y~874, 48x48 buttons) must be absent
-if grep -q '@ 34,874 48x48' capture/10-ax-standalone.txt; then
-  echo "NOT_STANDALONE: Safari toolbar frames present after icon launch" | tee -a capture/RESULT.txt
+if grep -q '@ 34,874 48x48\|@ 38,870 48x48' capture/10-ax-standalone.txt; then
+  echo "NOT_STANDALONE: Safari toolbar frames present" | tee -a capture/RESULT.txt
 else
   echo "STANDALONE_NO_SAFARI_TOOLBAR_FRAMES" | tee -a capture/RESULT.txt
 fi
 sleep 45
 shot 11-before-cut.png
-# first tap = user gesture for audio; screenshot only
 tap 220 500 3
 shot 11b-after-gesture.png
 sudo ifconfig en0 down || true
 sleep 4
-idb ui button HOME --udid "$UDID" || true
-sleep 3
-# kill the web app and relaunch from the icon with network off
-xcrun simctl spawn "$UDID" launchctl list 2>/dev/null | grep -i webapp | tee capture/12-webapp-procs.txt || true
-IC2=$(ocr 'coptic') || IC2="$IC"
-tap ${IC2% *} $(( ${IC2#* } - 40 )) 15
+xcrun simctl terminate "$UDID" "$WC" || true
+sleep 2
+xcrun simctl launch "$UDID" "$WC"
+sleep 20
 shot 12-offline-launch.png
-tap 40 100 4
+tap 41 105 4
 shot 13-offline-drawer.png
-DR=$(ocr 'Bible|الكتاب') && tap ${DR% *} ${DR#* } 5 || tap 290 345 5
-shot 14-offline-bible.png
-tap 220 300 5
-shot 15-offline-book.png
-tap 120 320 5
-shot 16-offline-chapter.png
+axd 13-ax-drawer.txt
+tap 220 345 5
+shot 14-offline-after-row.png
 finish
