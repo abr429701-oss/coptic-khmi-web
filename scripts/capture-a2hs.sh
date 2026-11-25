@@ -84,11 +84,15 @@ idb ui tap 378 894 --duration 0.15 --udid "$UDID"
 sleep 3
 shot 03-menu.png
 axd 03-ax-menu.txt
-ocr '^Share$|Add to Bookmarks' >/dev/null || grep -q '@ 164\.' capture/03-ax-menu.txt || BLOCK "Safari page menu not detected (OCR+AX) (see 03-menu.png)"
+grep -q '250x956' capture/03-ax-menu.txt || BLOCK "Safari page menu not detected by AX frames (see 03-menu.png)"
 echo "menu detected" | tee -a capture/RESULT.txt
-# ---- Gate 3: Share -> Add to Home Screen -> Add ----
+# ---- Gate 3 ----
 SX=$(ocr '^Share$') && tap ${SX% *} ${SX#* } 3 || tap 289 624 3
 shot 04-sharesheet.png
+axd 04-ax-sheet.txt
+cp /tmp/ocr-err.txt capture/ocr-err0.txt 2>/dev/null
+xcrun simctl io "$UDID" screenshot /tmp/t.png; /tmp/idbenv/bin/python /tmp/ocr.py /tmp/t.png 440 "Share|Copy|Add" > capture/ocr-test.txt 2>&1; ls -la /tmp/ocr-out* >> capture/ocr-test.txt 2>&1; tesseract --version >> capture/ocr-test.txt 2>&1
+for y in 1 2 3; do idb ui swipe 220 820 220 360 --udid "$UDID" || true; sleep 2; shot "04x-scroll$y.png"; axd "04x-ax$y.txt"; done
 for s in 1 2 3 4; do
   if ocr 'Add to Home' >/dev/null; then break; fi
   idb ui swipe 220 800 220 400 --udid "$UDID" || true
