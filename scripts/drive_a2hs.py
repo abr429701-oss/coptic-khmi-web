@@ -75,10 +75,20 @@ if MODE == "warmup":
         else: stop(f"warmup state {st}")
     stop("warmup never reached a clean page")
 if MODE == "install":
-    for i in range(20):
+    menu_attempts = 0
+    for i in range(30):
         st, lines, p = settle_state("inst")
         if st in ("safari_page", "app_page"):
-            tap(378, 894)                       # "..." page menu
+            menu_attempts += 1
+            if menu_attempts > 3: stop("page menu did not appear after 3 spaced taps")
+            tap(378, 894, wait=6)               # "..." page menu; simulator screenshots lag, so wait
+            seen = False
+            for k in range(4):                  # observe up to ~12s more before any retry
+                p, ls2 = snap("menuwait"); s2 = classify(ls2); log("menuwait", s2)
+                if s2 != "safari_page" and s2 != "app_page": seen = True; break
+                time.sleep(3)
+            continue
+        elif st == "tab_overview": tap(378, 894, wait=5)   # blue Done check sits where "..." was
         elif st == "menu_open": tap(*find(lines, r"(^|\s)Share$")[:2], wait=4)
         elif st == "share_collapsed": swipe_up()
         elif st == "share_expanded": tap(*find(lines, r"Add to Home Screen")[:2], wait=7)
