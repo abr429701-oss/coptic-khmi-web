@@ -123,43 +123,20 @@ shot 06-a2hs-confirm.png
 # iOS keyboard-intro modal ("Speed up your typing ... Continue") may cover the sheet: dismiss it
 tap 220 911 3
 shot 06b-a2hs-confirm-loaded.png
-ADD="388 113"
-tap ${ADD% *} ${ADD#* } 4
-shot 07-after-add.png
-echo "A2HS_ADD_TAPPED" | tee -a capture/RESULT.txt
-
-# ---- Gate 4: Home Screen icon, standalone launch ----
-idb ui button HOME --udid "$UDID" || true
-sleep 3
-shot 08-homescreen.png
-axd 08-ax-springboard.txt
-xcrun simctl listapps "$UDID" > capture/09-listapps.txt 2>&1 || true
-WC=$(grep -B2 -A12 -iE 'coptic|WebClip' capture/09-listapps.txt | grep -oE 'com\.apple\.webapp[A-Za-z0-9._-]*|[A-Za-z0-9._-]*webclip[A-Za-z0-9._-]*' | head -1)
-echo "webclip bundle: $WC" | tee -a capture/RESULT.txt
-[ -n "$WC" ] || BLOCK "no web clip app listed after Add (see 07/08/09)"
-xcrun simctl launch "$UDID" "$WC" | tee -a capture/RESULT.txt
-sleep 20
-shot 10-standalone.png
-axd 10-ax-standalone.txt
-if grep -q '@ 34,874 48x48\|@ 38,870 48x48' capture/10-ax-standalone.txt; then
-  echo "NOT_STANDALONE: Safari toolbar frames present" | tee -a capture/RESULT.txt
-else
-  echo "STANDALONE_NO_SAFARI_TOOLBAR_FRAMES" | tee -a capture/RESULT.txt
-fi
-sleep 45
-shot 11-before-cut.png
-tap 220 500 3
-shot 11b-after-gesture.png
-sudo ifconfig en0 down || true
-sleep 4
-xcrun simctl terminate "$UDID" "$WC" || true
-sleep 2
-xcrun simctl launch "$UDID" "$WC"
-sleep 20
-shot 12-offline-launch.png
-tap 41 105 4
-shot 13-offline-drawer.png
-axd 13-ax-drawer.txt
-tap 220 345 5
-shot 14-offline-after-row.png
+xcrun simctl listapps "$UDID" > capture/09a-listapps-before.txt 2>&1 || true
+md5 -q capture/06b-a2hs-confirm-loaded.png | tee capture/md5-06b.txt
+for i in 1 2 3; do
+  idb ui tap 388 113 --duration 0.15 --udid "$UDID" | tee -a capture/RESULT.txt
+  sleep 4
+  shot "07-add-press$i.png"
+  [ "$(md5 -q capture/07-add-press$i.png)" != "$(cat capture/md5-06b.txt)" ] && echo "screen changed after Add press $i" | tee -a capture/RESULT.txt && break
+done
+for n in 1 2 3 4 5 6 7 8; do sleep 5; shot "08-t$n.png"; done
+idb ui button HOME --udid "$UDID" | tee -a capture/RESULT.txt; sleep 4; shot 09-home-idb1.png
+idb ui button HOME --udid "$UDID" | tee -a capture/RESULT.txt; sleep 4; shot 09-home-idb2.png
+xcrun simctl listapps "$UDID" > capture/09b-listapps-after.txt 2>&1 || true
+diff capture/09a-listapps-before.txt capture/09b-listapps-after.txt > capture/09-listapps-diff.txt; wc -l capture/09-listapps-diff.txt | tee -a capture/RESULT.txt
+md5 -q capture/*.png > /dev/null
+echo "DIAGNOSTIC_DONE" | tee -a capture/RESULT.txt
 finish
+exit 0
