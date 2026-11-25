@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { ensureBibleOffline, verifyBibleCached } from "@/lib/offlineBible";
 
 type BadgeState = "hidden" | "preparing" | "ready";
 
@@ -8,10 +9,11 @@ const BASE = "/coptic-khmi-web/";
 
 /**
  * Web-only pill that tells the user when the app is durably saved on the device.
- * "Ready" is shown only after the service worker controls the page AND every
+ * "Ready" is shown only after the service worker controls the page, every
  * resource in offline-manifest.json (app shell, fonts, and the JS bundle that
- * carries the dictionary snapshot) is present in Cache Storage - so closing and
- * reopening the app genuinely works without internet. If the browser evicts
+ * carries the dictionary snapshot) is present in Cache Storage, AND the full
+ * Bible JSON set is cached - so closing and reopening the app genuinely works
+ * without internet, including books never opened before. If the browser evicts
  * cached data later, the badge drops back to "preparing" instead of lying.
  */
 async function verifyOfflineReady(): Promise<boolean> {
@@ -37,6 +39,7 @@ async function verifyOfflineReady(): Promise<boolean> {
 
 export default function OfflineReadyBadge() {
   const [state, setState] = useState<BadgeState>("hidden");
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 
   useEffect(() => {
     if (Platform.OS !== "web" || typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
@@ -44,8 +47,19 @@ export default function OfflineReadyBadge() {
     }
     let cancelled = false;
     const update = async () => {
-      const ok = await verifyOfflineReady();
-      if (!cancelled) setState(ok ? "ready" : "preparing");
+      const shellOk = await verifyOfflineReady();
+      if (!shellOk) {
+        if (!cancelled) setState("preparing");
+        return;
+      }
+      // Shell ready: fill the full Bible in the background (first online setup),
+      // then verify every chapter file is cached before saying "ready".
+      void ensureBibleOffline((done, total) => { if (!cancelled) setProgress({ done, total }); });
+      const bible = await verifyBibleCached();
+      if (!cancelled) {
+        setProgress({ done: bible.cached, total: bible.total });
+        setState(bible.total > 0 && bible.cached === bible.total ? "ready" : "preparing");
+      }
     };
     update();
     navigator.serviceWorker.addEventListener("controllerchange", update);
@@ -70,7 +84,11 @@ export default function OfflineReadyBadge() {
     <View style={[styles.pill, ready ? styles.ready : styles.preparing]}>
       <Feather name={ready ? "check-circle" : "download-cloud"} size={13} color={ready ? "#7CFC9A" : "#F5C96B"} />
       <Text style={[styles.text, { color: ready ? "#7CFC9A" : "#F5C96B" }]}>
-        {ready ? "جاهزة للعمل بدون إنترنت" : "جاري تجهيز النسخة للعمل بدون إنترنت…"}
+        {ready
+          ? "جاهزة للعمل بدون إنترنت"
+          : progress && progress.total > 0
+            ? `جاري تجهيز النسخة للعمل بدون إنترنت… ${Math.floor((progress.done / progress.total) * 100)}%`
+            : "جاري تجهيز النسخة للعمل بدون إنترنت…"}
       </Text>
     </View>
   );

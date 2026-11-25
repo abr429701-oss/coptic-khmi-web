@@ -4910,6 +4910,16 @@ export function LearnCopticScreen() {
                         message: "حدثت مشكلة في الملف المحلي، جاري التشغيل من السيرفر الآن لضمان عدم توقفك.",
                         type: "info"
                       });
+                    } else if (Platform.OS === "web") {
+                      // PWA: Drive blocks browser media requests (ORB / MediaError 4), so the
+                      // failure is not the user's connection. Say so accurately instead of
+                      // blaming "جودة الإنترنت".
+                      setSystemAlert({
+                        title: "عذراً",
+                        message: "هذا المقطع لا يمكن تشغيله مباشرة من المتصفح حاليًا",
+                        type: "error"
+                      });
+                      setActiveVideo(null);
                     } else {
                       setSystemAlert({
                         title: "عذراً",

@@ -24,7 +24,18 @@ const precache = ['/', '/index.html', '/manifest.json', '/offline-manifest.json'
   .map(u => u === '/' ? BASE + '/' : (u.startsWith(BASE) ? u : BASE + u));
 // Offline manifest the in-app badge verifies against Cache Storage: "ready" only when
 // every shell, font and dictionary-carrying bundle is durably cached on the device.
-fs.writeFileSync(path.join(DIST, 'offline-manifest.json'), JSON.stringify({ version: 1, resources: precache }));
+// The full Bible JSON set is listed separately: the app downloads it in the background
+// after first online setup (not at SW install, which must stay fast) and the badge
+// only reports offline-ready once every listed chapter file is cached.
+const bibleManifest = JSON.parse(fs.readFileSync('utils/bibleManifest.json', 'utf8'));
+const bibleFiles = [];
+for (const lang of Object.keys(bibleManifest)) {
+  for (const bookId of Object.keys(bibleManifest[lang])) {
+    bibleFiles.push(BASE + '/bible/' + bibleManifest[lang][bookId].split('/').map(encodeURIComponent).join('/'));
+  }
+}
+fs.writeFileSync(path.join(DIST, 'offline-manifest.json'), JSON.stringify({ version: 2, resources: precache, bible: bibleFiles }));
+console.log('offline-manifest: ' + precache.length + ' shell + ' + bibleFiles.length + ' bible files');
 
 const sw = `// Coptic Khmi web app service worker. App shell precached; Bible JSON and same-origin
 // GETs cached on demand. Cross-origin data (sheet sync, audio, videos) always goes to network.

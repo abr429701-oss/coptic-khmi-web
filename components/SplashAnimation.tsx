@@ -62,9 +62,44 @@ const ALPHA_SIZE = LOGO_SIZE;
 const WORD = ["Ⲭ", "ⲏ", "ⲙ", "ⲓ"];
 
 /* ─── صوت الويب — ناقوس كنسي احترافي ────────────────────── */
+// iOS Safari/Chrome-on-iOS start every AudioContext "suspended" until a user
+// gesture; scheduling oscillators on a suspended context plays nothing. We try
+// an immediate resume (works when the page already has interaction), and
+// otherwise defer the chime to the first tap/keypress. We never claim audible
+// playback without a gesture — the platform forbids it.
 function playWebChime() {
   try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AC = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AC) return;
+    const ctx: AudioContext = new AC();
+    const start = () => scheduleBells(ctx);
+    const tryStart = (): boolean => {
+      if (ctx.state !== "running") return false;
+      start();
+      return true;
+    };
+    if (tryStart()) return;
+    ctx.resume().then(() => tryStart()).catch(() => { });
+    if ((ctx.state as string) !== "running") {
+      const onGesture = () => {
+        try {
+          const fresh: AudioContext = new AC();
+          if (fresh.state === "running") {
+            scheduleBells(fresh);
+          } else {
+            fresh.resume().then(() => { if (fresh.state === "running") scheduleBells(fresh); }).catch(() => { });
+          }
+        } catch (_) { }
+      };
+      window.addEventListener("pointerdown", onGesture, { once: true });
+      window.addEventListener("touchstart", onGesture, { once: true });
+      window.addEventListener("keydown", onGesture, { once: true });
+    }
+  } catch (_) { }
+}
+
+function scheduleBells(ctx: AudioContext) {
+  try {
 
     function bell(freq: number, gain: number, startTime: number, decay: number) {
       const osc = ctx.createOscillator();
@@ -85,7 +120,7 @@ function playWebChime() {
       env.gain.exponentialRampToValueAtTime(gain * 0.3, startTime + 0.3);
       env.gain.exponentialRampToValueAtTime(0.0001, startTime + decay);
       osc.start(startTime); osc.stop(startTime + decay);
-      osc2.start(startTime); osc.stop(startTime + decay);
+      osc2.start(startTime); osc2.stop(startTime + decay);
     }
 
     const t = ctx.currentTime;
@@ -226,6 +261,16 @@ export function SplashAnimation({ onFinish }: Props) {
     y: new Animated.Value(LETTER_RISE),
   }))).current;
 
+
+  // adjustsFontSizeToFit is a no-op on RN Web, and forcing width:wordW clips
+  // "COPTIC DICTIONARY" into "COPTIC DICT...". On web let the subtitle center
+  // at its natural width like native (fits phone widths at full size).
+  const SUB_TEXT = "COPTIC DICTIONARY";
+  const subBaseSize = Math.min(17, Math.max(15, SUB_SIZE + 2));
+  const subWebStyle = Platform.OS === "web"
+    ? ({ alignSelf: "center", maxWidth: "96%", whiteSpace: "nowrap" } as const)
+    : ({ width: wordW } as const);
+
   const isAlpha = splashMode === "alpha";
   const isLogo = splashMode === "logo";
   const isTut = splashMode === "tut";
@@ -338,9 +383,9 @@ export function SplashAnimation({ onFinish }: Props) {
             <Animated.View style={[styles.lineInner, { opacity: lineTx, transform: [{ translateX: lineX }] }]} />
           </View>
           <Animated.Text
-            style={[styles.sub, { opacity: subOp, width: wordW, fontSize: Math.min(17, Math.max(15, SUB_SIZE + 2)) }]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
+            style={[styles.sub, { opacity: subOp, fontSize: subBaseSize }, subWebStyle]}
+            numberOfLines={Platform.OS === "web" ? undefined : 1}
+            adjustsFontSizeToFit={Platform.OS !== "web"}
           >
             COPTIC DICTIONARY
           </Animated.Text>
