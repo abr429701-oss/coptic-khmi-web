@@ -80,15 +80,20 @@ if MODE == "install":
         st, lines, p = settle_state("inst")
         if st in ("safari_page", "app_page"):
             menu_attempts += 1
-            if menu_attempts > 3: stop("page menu did not appear after 3 spaced taps")
-            tap(378, 894, wait=6)               # "..." page menu; simulator screenshots lag, so wait
-            seen = False
-            for k in range(4):                  # observe up to ~12s more before any retry
-                p, ls2 = snap("menuwait"); s2 = classify(ls2); log("menuwait", s2)
-                if s2 != "safari_page" and s2 != "app_page": seen = True; break
-                time.sleep(3)
+            if menu_attempts > 1: stop("page menu not opened after ONE tap and 60s observation (see timeline stills)")
+            t0 = time.time()
+            tap(378, 894, wait=0.5)
+            seen = None
+            for k in range(16):                 # observe up to ~60s, NO second tap
+                p, ls2 = snap(f"menuobs{k:02d}"); s2 = classify(ls2)
+                log("menuobs", k, "t+%.1fs" % (time.time() - t0), s2)
+                if s2 not in ("safari_page", "app_page"): seen = s2; break
+                time.sleep(2.5)
+            if seen is None:
+                sh(f"idb ui describe-all --udid {UDID} > {CAP}/menuobs-ax.json 2>&1")
+                stop("page menu unchanged for 60s after one tap (input ignored or wrong target)")
             continue
-        elif st == "tab_overview": tap(378, 894, wait=5)   # blue Done check sits where "..." was
+        elif st == "tab_overview": stop("unexpected tab overview (no verified Done text; not recovering)")
         elif st == "menu_open": tap(*find(lines, r"(^|\s)Share$")[:2], wait=4)
         elif st == "share_collapsed": swipe_up()
         elif st == "share_expanded": tap(*find(lines, r"Add to Home Screen")[:2], wait=7)
