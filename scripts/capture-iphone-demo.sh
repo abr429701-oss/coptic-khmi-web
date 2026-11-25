@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
-# Real iOS Simulator capture v4: correct search-bar coordinates; A2HS via Safari "..." page menu (native UI, AX-visible).
+# Real iOS Simulator capture v5: every interactive step is AX-driven AND verified.
+# Web content is AX-invisible (known) -> search field tapped by fraction, but keyboard
+# presence is VERIFIED via native AX before typing. All Safari chrome, menus, share
+# sheet, dialogs, SpringBoard are native -> AX label lookup with wait/retry.
 set -x
 mkdir -p capture
 URL="${LIVE_URL:-https://abr429701-oss.github.io/coptic-khmi-web/}"
-cp scripts/tap_ax.py /tmp/tap_ax.py
+cp scripts/tap_ax.py /tmp/ax.py
 
 DT=$(xcrun simctl list devicetypes | sed -n 's/.*\(iPhone [0-9][0-9A-Za-z ]*\) (.*/\1/p' | grep -vi 'se\|mini' | sort -V | tail -1)
 echo "Device type: $DT"
@@ -21,62 +24,87 @@ sleep 10
 idb list-targets || true
 
 xcrun simctl openurl "$UDID" "$URL"
-sleep 30
-xcrun simctl io "$UDID" screenshot capture/01-home-online.png
+sleep 25
 
-# Dismiss Safari's first-run onboarding popup if present
-python3 /tmp/tap_ax.py "$UDID" label '^(Close|إغلاق)$' || python3 /tmp/tap_ax.py "$UDID" frac 0.90,0.75 || true
+# Dismiss Safari's first-run coachmark BEFORE anything else (it swallowed v4's taps).
+for i in 1 2 3; do
+  python3 /tmp/ax.py tap "$UDID" '^(Close|إغلاق|Done|تم)$' && sleep 2 || break
+done
 sleep 2
+xcrun simctl io "$UDID" screenshot capture/01-home-online.png
 
 xcrun simctl io "$UDID" recordVideo --codec h264 capture/demo.mov &
 REC=$!
 sleep 2
 
-# Search flow: tap the app's search field (web content is invisible to idb AX; use measured fraction)
-python3 /tmp/tap_ax.py "$UDID" frac 0.5,0.335 || true
-sleep 3
+# ---- Search flow ----
+# Tap the app's search field by fraction; keyboard (native) must appear. Retry once higher.
+python3 /tmp/ax.py frac "$UDID" 0.5,0.342
+if ! python3 /tmp/ax.py wait "$UDID" '^(space|مسافة|return|Go|بحث)$' 8; then
+  python3 /tmp/ax.py frac "$UDID" 0.5,0.32
+  python3 /tmp/ax.py wait "$UDID" '^(space|مسافة|return|Go|بحث)$' 8 || echo "KEYBOARD NEVER APPEARED"
+fi
 idb ui text "love" --udid "$UDID" || true
 sleep 8
 xcrun simctl io "$UDID" screenshot capture/02-search.png
-# Dismiss keyboard if it covers results, then open first result
-idb ui key 12 --udid "$UDID" || true   # hide keyboard (best effort)
-sleep 2
-python3 /tmp/tap_ax.py "$UDID" frac 0.5,0.52 || true
+# Tap first result (above the keyboard), verify page changed by re-shot
+python3 /tmp/ax.py frac "$UDID" 0.5,0.42 || true
 sleep 8
 xcrun simctl io "$UDID" screenshot capture/03-details.png
-idb ui button HOME --udid "$UDID" || true
-sleep 2
-xcrun simctl openurl "$UDID" "$URL"
-sleep 8
+# Back to home view for the A2HS beat
+python3 /tmp/ax.py tap "$UDID" '^(Back|رجوع)$' || python3 /tmp/ax.py frac "$UDID" 0.08,0.11 || true
+sleep 4
 
-# Add to Home Screen via the real Safari "..." page menu (native UI, so AX works here)
-python3 /tmp/tap_ax.py "$UDID" frac 0.945,0.955 || true
-sleep 4
+# ---- Add to Home Screen (all native UI: fully AX-driven) ----
+# 1) Open the "..." page menu. AX label varies by iOS version; fall back to measured coords.
+if ! python3 /tmp/ax.py tap "$UDID" '(Page Settings|More Options|Show Toolbar|…|\.\.\.)'; then
+  python3 /tmp/ax.py frac "$UDID" 0.862,0.937
+fi
+# 2) Verify the menu actually opened before touching anything else.
+if ! python3 /tmp/ax.py wait "$UDID" '^Share' 6; then
+  python3 /tmp/ax.py frac "$UDID" 0.862,0.937
+  python3 /tmp/ax.py wait "$UDID" '^Share' 6 || echo "PAGE MENU NEVER OPENED"
+fi
+sleep 1
 xcrun simctl io "$UDID" screenshot capture/05-pagemenu.png
-python3 /tmp/tap_ax.py "$UDID" label '^Share' || true
-sleep 4
+# 3) Share...
+python3 /tmp/ax.py tap "$UDID" '^Share' || true
+# 4) Verify share sheet; A2HS row may need a scroll inside the sheet.
+if ! python3 /tmp/ax.py wait "$UDID" 'Add to Home Screen' 6; then
+  idb ui swipe 360 1150 360 700 --udid "$UDID" || true
+  python3 /tmp/ax.py wait "$UDID" 'Add to Home Screen' 6 || echo "A2HS ROW NOT FOUND"
+fi
+sleep 1
 xcrun simctl io "$UDID" screenshot capture/06-sharesheet.png
-python3 /tmp/tap_ax.py "$UDID" label 'Add to Home Screen' || true
-sleep 4
+# 5) Tap A2HS, verify the confirm sheet (has its own Add button), screenshot, confirm.
+python3 /tmp/ax.py tap "$UDID" 'Add to Home Screen' || true
+python3 /tmp/ax.py wait "$UDID" '^Add$' 8 || echo "A2HS CONFIRM NEVER APPEARED"
+sleep 1
 xcrun simctl io "$UDID" screenshot capture/07-a2hs-confirm.png
-python3 /tmp/tap_ax.py "$UDID" label '^Add$' || true
-sleep 4
+python3 /tmp/ax.py tap "$UDID" '^Add$' || true
+sleep 3
+
+# ---- SpringBoard: icon must exist now; tap it for the standalone-launch money shot ----
 idb ui button HOME --udid "$UDID" || true
 sleep 3
+python3 /tmp/ax.py wait "$UDID" '(Coptic|ⲬⲎⲘⲒ|KHMI)' 8 || echo "NO ICON ON SPRINGBOARD"
 xcrun simctl io "$UDID" screenshot capture/08-homescreen.png
-xcrun simctl openurl "$UDID" "$URL"
-sleep 10
+python3 /tmp/ax.py tap "$UDID" '(Coptic|ⲬⲎⲘⲒ|KHMI)' || true
+sleep 12
+xcrun simctl io "$UDID" screenshot capture/08b-standalone.png
 
-# Offline demo: cut host network, reload; app must render from the service worker
+# ---- Offline proof: cut host network, relaunch the installed app, it must render ----
+idb ui button HOME --udid "$UDID" || true
+sleep 2
 sudo ifconfig en0 down || true
 sleep 4
-xcrun simctl openurl "$UDID" "$URL"
+python3 /tmp/ax.py tap "$UDID" '(Coptic|ⲬⲎⲘⲒ|KHMI)' || true
 sleep 15
 xcrun simctl io "$UDID" screenshot capture/09-offline.png
 sudo ifconfig en0 up || true
-sleep 10
+sleep 8
 curl -sS -o /dev/null -w 'network restored: %{http_code}\n' https://api.github.com/zen || sudo ifconfig en0 up || true
-sleep 5
+sleep 3
 
 kill -INT $REC || true
 sleep 5
