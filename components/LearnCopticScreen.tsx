@@ -4841,7 +4841,22 @@ export function LearnCopticScreen() {
           </View>
 
           <View style={styles.mediaContainer} ref={videoViewRef} collapsable={false}>
-            {activeVideo && (
+            {activeVideo && isWeb && !activeVideo.localVideo ? (
+              // Web + remote: Drive blocks direct media fetches from browsers (ORB /
+              // MediaError 4). Drive's own embed player is built for cross-origin
+              // iframes, so use it. Caveats vs the custom player: no watched/progress
+              // tracking and Drive's own UI (no app controls). Local downloaded files
+              // keep the custom player branch below.
+              <View style={{ flex: 1, width: "100%" }}>
+                {React.createElement("iframe", {
+                  src: `https://drive.google.com/file/d/${extractDriveId(activeVideo.videoId)}/preview`,
+                  style: { width: "100%", height: "100%", border: 0, backgroundColor: "#000" },
+                  allow: "autoplay; fullscreen; encrypted-media",
+                  allowFullScreen: true,
+                  title: activeVideo.title,
+                })}
+              </View>
+            ) : activeVideo && (
               <View style={{ flex: 1, width: "100%" }}>
                 <Video
                   ref={videoPlayerRef}
