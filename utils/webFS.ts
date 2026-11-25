@@ -50,5 +50,32 @@ export function createDownloadResumable(url: string, fileUri: string, _o?: any, 
     resumeAsync: async () => { throw new Error("resume not supported on web"); },
   };
 }
+export const Paths = { cache: cacheDirectory, document: documentDirectory };
+function joinUri(parts: any[]): string {
+  const segs = parts.map((p) => (typeof p === "string" ? p : p?.uri ?? String(p)));
+  return segs.join("/").replace(/([^:])\/+/g, "$1/").replace("webfs:/", "webfs://");
+}
+export class File {
+  uri: string;
+  constructor(...parts: any[]) { this.uri = joinUri(parts); }
+  get name() { return uriToName(this.uri); }
+  get exists() { return store.has(this.uri); }
+  write(data: any) {
+    if (typeof data === "string") { store.set(this.uri, { data, encoding: "utf8" }); return; }
+    const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    store.set(this.uri, { data: btoa(bin), encoding: "base64" });
+  }
+  async text() { const f = store.get(this.uri); return f ? f.data : ""; }
+  async base64() { const f = store.get(this.uri); if (!f) return ""; return f.encoding === "base64" ? f.data : btoa(unescape(encodeURIComponent(f.data))); }
+  delete() { store.delete(this.uri); }
+}
+export class Directory {
+  uri: string;
+  constructor(...parts: any[]) { this.uri = joinUri(parts); }
+  create() {}
+  delete() {}
+}
 export const StorageAccessFramework = {};
 export default { documentDirectory, cacheDirectory, EncodingType, getInfoAsync, makeDirectoryAsync, deleteAsync, readDirectoryAsync, copyAsync, moveAsync, readAsStringAsync, writeAsStringAsync, getContentUriAsync, downloadAsync, createDownloadResumable, StorageAccessFramework };
