@@ -48,7 +48,7 @@ idb ui text "love" --udid "$UDID" || true
 sleep 8
 xcrun simctl io "$UDID" screenshot capture/02-search.png
 # Tap first result (above the keyboard), verify page changed by re-shot
-python3 /tmp/ax.py frac "$UDID" 0.5,0.42 || true
+python3 /tmp/ax.py frac "$UDID" 0.5,0.48 || true
 sleep 8
 xcrun simctl io "$UDID" screenshot capture/03-details.png
 # Back to home view for the A2HS beat
@@ -67,17 +67,33 @@ if ! python3 /tmp/ax.py wait "$UDID" '^Share' 6; then
 fi
 sleep 1
 xcrun simctl io "$UDID" screenshot capture/05-pagemenu.png
-# 3) Share...
-python3 /tmp/ax.py tap "$UDID" '^Share' || true
-# 4) Verify share sheet; A2HS row may need a scroll inside the sheet.
-if ! python3 /tmp/ax.py wait "$UDID" 'Add to Home Screen' 6; then
-  idb ui swipe 360 1150 360 700 --udid "$UDID" || true
-  python3 /tmp/ax.py wait "$UDID" 'Add to Home Screen' 6 || echo "A2HS ROW NOT FOUND"
+# 3) Share... (anchored; a stray coachmark can also contain the word Share)
+python3 /tmp/ax.py tap "$UDID" '^(Close|Done|تم|إغلاق)$' || true   # dismiss any new coachmark first
+sleep 1
+python3 /tmp/ax.py dump "$UDID" > capture/ax-pagemenu.txt || true
+python3 /tmp/ax.py tap "$UDID" '^Share$' || true
+# 4) Verify the SHARE SHEET really opened (Copy is always in it) before any swipe.
+if ! python3 /tmp/ax.py wait "$UDID" '^(Copy|Add to Reading List)$' 8; then
+  echo "SHARE SHEET DID NOT OPEN"
+  python3 /tmp/ax.py dump "$UDID" > capture/ax-nosheet.txt || true
+  # likely a coachmark or tab overview intercepted; try to escape and retry once
+  python3 /tmp/ax.py tap "$UDID" '^(Done|Close|تم|إغلاق)$' || true
+  sleep 2
+  python3 /tmp/ax.py tap "$UDID" '(Page Settings|More Options|…|\.\.\.)' || python3 /tmp/ax.py frac "$UDID" 0.862,0.937
+  python3 /tmp/ax.py wait "$UDID" '^Share$' 6 || echo "PAGE MENU REOPEN FAILED"
+  python3 /tmp/ax.py tap "$UDID" '^Share$' || true
+  python3 /tmp/ax.py wait "$UDID" '^(Copy|Add to Reading List)$' 8 || echo "SHARE SHEET DID NOT OPEN (RETRY)"
+fi
+# 5) A2HS row may need a scroll INSIDE the sheet (sheet occupies the lower half).
+if ! python3 /tmp/ax.py wait "$UDID" '^Add to Home Screen$' 5; then
+  idb ui swipe 360 1250 360 850 --udid "$UDID" || true
+  python3 /tmp/ax.py wait "$UDID" '^Add to Home Screen$' 6 || echo "A2HS ROW NOT FOUND"
 fi
 sleep 1
 xcrun simctl io "$UDID" screenshot capture/06-sharesheet.png
 # 5) Tap A2HS, verify the confirm sheet (has its own Add button), screenshot, confirm.
-python3 /tmp/ax.py tap "$UDID" 'Add to Home Screen' || true
+python3 /tmp/ax.py dump "$UDID" > capture/ax-sheet.txt || true
+python3 /tmp/ax.py tap "$UDID" '^Add to Home Screen$' || true
 python3 /tmp/ax.py wait "$UDID" '^Add$' 8 || echo "A2HS CONFIRM NEVER APPEARED"
 sleep 1
 xcrun simctl io "$UDID" screenshot capture/07-a2hs-confirm.png
@@ -98,7 +114,12 @@ idb ui button HOME --udid "$UDID" || true
 sleep 2
 sudo ifconfig en0 down || true
 sleep 4
-python3 /tmp/ax.py tap "$UDID" '(Coptic|ⲬⲎⲘⲒ|KHMI)' || true
+if python3 /tmp/ax.py tap "$UDID" '(Coptic|ⲬⲎⲘⲒ|KHMI)'; then
+  echo "offline via installed icon"
+else
+  echo "no icon; offline via Safari reload (v3 method)"
+  xcrun simctl openurl "$UDID" "$URL"
+fi
 sleep 15
 xcrun simctl io "$UDID" screenshot capture/09-offline.png
 sudo ifconfig en0 up || true
